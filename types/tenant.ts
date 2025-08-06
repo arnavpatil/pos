@@ -4,6 +4,8 @@ export interface RentPayment {
   method: 'Bank Transfer' | 'Card';
   date: string;
   tenantId: string;
+  status?: 'completed' | 'pending' | 'failed';
+  notes?: string;
 }
 
 export interface Tenant {
@@ -17,6 +19,10 @@ export interface Tenant {
   leaseEndDate: string;
   status: 'Upcoming' | 'Active' | 'Expired';
   rentPayments: RentPayment[];
+  phone?: string;
+  businessType?: string;
+  monthlyRent?: number;
+  securityDeposit?: number;
 }
 
 export type LeaseStatus = 'Upcoming' | 'Active' | 'Expired';

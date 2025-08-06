@@ -4,12 +4,11 @@ import { Tenant } from '@/types/tenant';
 
 interface TenantListProps {
   tenants: Tenant[];
-  onEdit: (tenant: Tenant) => void;
-  onDelete: (tenantId: string) => void;
+  onViewTenant: (tenantId: string) => void;
   onAddNew: () => void;
 }
 
-const TenantList = ({ tenants, onEdit, onDelete, onAddNew }: TenantListProps) => {
+const TenantList = ({ tenants, onViewTenant, onAddNew }: TenantListProps) => {
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
     
@@ -22,12 +21,6 @@ const TenantList = ({ tenants, onEdit, onDelete, onAddNew }: TenantListProps) =>
         return `${baseClasses} bg-red-100 text-red-800`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-  };
-
-  const handleDelete = (tenant: Tenant) => {
-    if (window.confirm(`Are you sure you want to delete ${tenant.name}? This action cannot be undone.`)) {
-      onDelete(tenant.id);
     }
   };
 
@@ -95,20 +88,16 @@ const TenantList = ({ tenants, onEdit, onDelete, onAddNew }: TenantListProps) =>
                     </span>
                   </td>
                   <td className="table-cell">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => onEdit(tenant)}
-                        className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tenant)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => onViewTenant(tenant.id)}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Tenant
+                    </button>
                   </td>
                 </tr>
               ))}

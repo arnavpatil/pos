@@ -19,14 +19,49 @@ const Navigation = () => {
 
   const userPermissions = getRolePermissions(user.role);
 
-  const navItems = [
-    { name: 'Tenants', href: '/admin/tenants', permission: 'tenants' },
-    { name: 'Inventory', href: '/inventory', permission: 'inventory' },
-    { name: 'POS', href: '/pos', permission: 'pos' },
-    { name: 'Reports', href: '/reports', permission: 'reports' },
-  ];
+  const getNavItems = () => {
+    const baseItems = [];
+    
+    // Admin items
+    if (userPermissions.includes('admin-dashboard')) {
+      baseItems.push({ name: 'Dashboard', href: '/admin', permission: 'admin-dashboard' });
+    }
+    if (userPermissions.includes('admin-products')) {
+      baseItems.push({ name: 'Products', href: '/admin/products', permission: 'admin-products' });
+    }
+    if (userPermissions.includes('admin-sales')) {
+      baseItems.push({ name: 'Sales', href: '/admin/sales', permission: 'admin-sales' });
+    }
+    
+    // Tenant items
+    if (userPermissions.includes('tenant-dashboard')) {
+      baseItems.push({ name: 'Dashboard', href: '/tenant', permission: 'tenant-dashboard' });
+    }
+    if (userPermissions.includes('tenant-products')) {
+      baseItems.push({ name: 'My Products', href: '/tenant/products', permission: 'tenant-products' });
+    }
+    if (userPermissions.includes('tenant-sales')) {
+      baseItems.push({ name: 'My Sales', href: '/tenant/sales', permission: 'tenant-sales' });
+    }
+    if (userPermissions.includes('tenant-payments')) {
+      baseItems.push({ name: 'Payments', href: '/tenant/payments', permission: 'tenant-payments' });
+    }
+    
+    // Common items
+    if (userPermissions.includes('pos')) {
+      baseItems.push({ name: 'POS', href: '/pos', permission: 'pos' });
+    }
+    if (userPermissions.includes('inventory')) {
+      baseItems.push({ name: 'Inventory', href: '/inventory', permission: 'inventory' });
+    }
+    if (userPermissions.includes('reports')) {
+      baseItems.push({ name: 'Reports', href: '/reports', permission: 'reports' });
+    }
+    
+    return baseItems;
+  };
 
-  const accessibleItems = navItems.filter(item => userPermissions.includes(item.permission));
+  const navItems = getNavItems();
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -37,7 +72,7 @@ const Navigation = () => {
               <h1 className="text-xl font-bold text-gray-900">Cornven POS</h1>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {accessibleItems.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -49,17 +84,6 @@ const Navigation = () => {
                 >
                   {item.name}
                 </Link>
-              ))}
-              {navItems.filter(item => !userPermissions.includes(item.permission)).map((item) => (
-                <span
-                  key={item.name}
-                  className="border-transparent text-gray-400 cursor-not-allowed inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium relative"
-                >
-                  {item.name}
-                  <span className="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    No Access
-                  </span>
-                </span>
               ))}
             </div>
           </div>

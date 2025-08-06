@@ -8,12 +8,13 @@ import TenantList from '@/components/TenantList';
 import TenantForm from '@/components/TenantForm';
 import LeaseManagement from '@/components/LeaseManagement';
 import RentCollection from '@/components/RentCollection';
+import NotificationManager from '@/components/NotificationManager';
 import { Tenant, TenantFormData, RentPayment } from '@/types/tenant';
 import { mockTenants, mockRentPayments } from '@/data/mockData';
 import { getRolePermissions } from '@/data/mockAuth';
 import { calculateLeaseStatus } from '@/data/mockData';
 
-type TabType = 'list' | 'lease' | 'rent';
+type TabType = 'list' | 'lease' | 'rent' | 'notifications';
 
 export default function TenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -55,13 +56,8 @@ export default function TenantsPage() {
     setIsFormOpen(true);
   };
 
-  const handleEditTenant = (tenant: Tenant) => {
-    setEditingTenant(tenant);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteTenant = (tenantId: string) => {
-    setTenants(prev => prev.filter(tenant => tenant.id !== tenantId));
+  const handleViewTenant = (tenantId: string) => {
+    router.push(`/admin/tenants/${tenantId}`);
   };
 
   const handleSubmitTenant = (tenant: Tenant) => {
@@ -107,10 +103,58 @@ export default function TenantsPage() {
     }));
   };
 
+  const downloadPaymentHistory = (tenantId?: string) => {
+    let paymentsToExport: (RentPayment & { tenantName: string })[] = [];
+    
+    if (tenantId) {
+      // Download for specific tenant
+      const tenant = tenants.find(t => t.id === tenantId);
+      if (tenant) {
+        paymentsToExport = tenant.rentPayments.map(payment => ({
+          ...payment,
+          tenantName: tenant.name
+        }));
+      }
+    } else {
+      // Download for all tenants
+      paymentsToExport = tenants.flatMap(tenant =>
+        tenant.rentPayments.map(payment => ({
+          ...payment,
+          tenantName: tenant.name
+        }))
+      );
+    }
+
+    // Create CSV content
+    const headers = ['Date', 'Tenant Name', 'Amount', 'Payment Method', 'Payment ID'];
+    const csvContent = [
+      headers.join(','),
+      ...paymentsToExport.map(payment => [
+        new Date(payment.date).toLocaleDateString(),
+        payment.tenantName,
+        `$${payment.amount}`,
+        payment.method,
+        payment.id
+      ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `payment-history-${tenantId || 'all'}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const tabs = [
     { id: 'list' as TabType, name: 'Tenant List', icon: '👥' },
     { id: 'lease' as TabType, name: 'Lease Management', icon: '📋' },
     { id: 'rent' as TabType, name: 'Rent Collection', icon: '💰' },
+    { id: 'notifications' as TabType, name: 'Notifications', icon: '🔔' },
   ];
 
   return (
@@ -149,12 +193,25 @@ export default function TenantsPage() {
         {/* Tab Content */}
         <div className="space-y-6">
           {activeTab === 'list' && (
-            <TenantList
-              tenants={tenants}
-              onEdit={handleEditTenant}
-              onDelete={handleDeleteTenant}
-              onAddNew={handleAddTenant}
-            />
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Tenant Management</h2>
+                <button
+                  onClick={() => downloadPaymentHistory()}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Download All Payment History</span>
+                </button>
+              </div>
+              <TenantList
+                tenants={tenants}
+                onViewTenant={handleViewTenant}
+                onAddNew={handleAddTenant}
+              />
+            </>
           )}
 
           {activeTab === 'lease' && (
@@ -169,6 +226,10 @@ export default function TenantsPage() {
               tenants={tenants}
               onAddPayment={handleAddPayment}
             />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationManager tenants={tenants} />
           )}
         </div>
 

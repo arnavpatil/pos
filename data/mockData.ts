@@ -6,21 +6,27 @@ export const mockRentPayments: RentPayment[] = [
     amount: 200,
     method: 'Bank Transfer',
     date: '2024-08-01',
-    tenantId: 'tenant-1'
+    tenantId: 'tenant-1',
+    status: 'completed',
+    notes: 'Monthly rent payment'
   },
   {
     id: 'payment-2',
     amount: 200,
     method: 'Bank Transfer',
     date: '2024-09-01',
-    tenantId: 'tenant-1'
+    tenantId: 'tenant-1',
+    status: 'completed',
+    notes: 'Monthly rent payment'
   },
   {
     id: 'payment-3',
     amount: 150,
     method: 'Card',
     date: '2024-10-01',
-    tenantId: 'tenant-1'
+    tenantId: 'tenant-1',
+    status: 'pending',
+    notes: 'Partial payment received'
   }
 ];
 
@@ -31,10 +37,14 @@ export const mockTenants: Tenant[] = [
     email: 'alice.smith@email.com',
     businessName: 'Alice\'s Artworks',
     contactNumber: '+61 400 123 456',
+    phone: '+61 400 123 456',
+    businessType: 'Visual Arts',
     cubeId: 'C1',
     leaseStartDate: '2024-08-01',
     leaseEndDate: '2026-01-31',
     status: 'Active',
+    monthlyRent: 200,
+    securityDeposit: 400,
     rentPayments: mockRentPayments.filter(payment => payment.tenantId === 'tenant-1')
   },
   {
@@ -43,10 +53,14 @@ export const mockTenants: Tenant[] = [
     email: 'bob.lee@email.com',
     businessName: 'Bob\'s Handcrafts',
     contactNumber: '+61 400 789 012',
+    phone: '+61 400 789 012',
+    businessType: 'Handcrafts',
     cubeId: 'C3',
     leaseStartDate: '2025-02-01',
     leaseEndDate: '2025-07-31',
     status: 'Upcoming',
+    monthlyRent: 180,
+    securityDeposit: 360,
     rentPayments: []
   },
   {
@@ -55,24 +69,32 @@ export const mockTenants: Tenant[] = [
     email: 'carol.johnson@email.com',
     businessName: 'Carol\'s Ceramics',
     contactNumber: '+61 400 345 678',
+    phone: '+61 400 345 678',
+    businessType: 'Ceramics',
     cubeId: 'C2',
     leaseStartDate: '2023-06-01',
     leaseEndDate: '2024-05-31',
     status: 'Expired',
+    monthlyRent: 180,
+    securityDeposit: 360,
     rentPayments: [
       {
         id: 'payment-4',
         amount: 180,
         method: 'Card',
         date: '2023-06-01',
-        tenantId: 'tenant-3'
+        tenantId: 'tenant-3',
+        status: 'completed',
+        notes: 'First month rent'
       },
       {
         id: 'payment-5',
         amount: 180,
         method: 'Bank Transfer',
         date: '2023-07-01',
-        tenantId: 'tenant-3'
+        tenantId: 'tenant-3',
+        status: 'completed',
+        notes: 'Monthly rent payment'
       }
     ]
   }

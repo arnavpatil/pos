@@ -7,22 +7,67 @@ export const mockUsers: User[] = [
     email: 'admin@cornven.com',
     name: 'Admin User',
     role: 'admin',
-    createdAt: '2024-01-01T00:00:00Z'
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'user-2',
     email: 'inventory@cornven.com',
     name: 'Inventory Manager',
     role: 'inventory',
-    createdAt: '2024-01-01T00:00:00Z'
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'user-3',
     email: 'pos@cornven.com',
     name: 'POS Operator',
     role: 'pos',
-    createdAt: '2024-01-01T00:00:00Z'
-  }
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'tenant-1',
+    email: 'sarah@artcorner.com',
+    name: 'Sarah Johnson',
+    role: 'tenant',
+    tenantId: 'tenant-1',
+    artistId: 'ART001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'tenant-2',
+    email: 'luna@jewelry.com',
+    name: 'Luna Martinez',
+    role: 'tenant',
+    tenantId: 'tenant-2',
+    artistId: 'ART002',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'tenant-3',
+    email: 'otaku@crafts.com',
+    name: 'Alex Chen',
+    role: 'tenant',
+    tenantId: 'tenant-3',
+    artistId: 'ART003',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'tenant-4',
+    email: 'pixel@dreams.com',
+    name: 'Maya Patel',
+    role: 'tenant',
+    tenantId: 'tenant-4',
+    artistId: 'ART004',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'tenant-5',
+    email: 'paper@ink.com',
+    name: 'David Kim',
+    role: 'tenant',
+    tenantId: 'tenant-5',
+    artistId: 'ART005',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
 ];
 
 // Mock authentication functions
@@ -75,19 +120,23 @@ export const getRoleDisplayName = (role: string): string => {
       return 'Inventory Manager';
     case 'pos':
       return 'POS Operator';
+    case 'tenant':
+      return 'Tenant/Artist';
     default:
-      return role;
+      return 'Unknown Role';
   }
 };
 
 export const getRolePermissions = (role: string): string[] => {
   switch (role) {
     case 'admin':
-      return ['tenants', 'inventory', 'pos', 'reports'];
+      return ['tenants', 'inventory', 'pos', 'reports', 'admin-sales'];
     case 'inventory':
       return ['inventory', 'pos'];
     case 'pos':
-      return ['pos'];
+      return ['pos', 'pos-sales'];
+    case 'tenant':
+      return ['tenant-dashboard', 'tenant-products', 'tenant-sales', 'tenant-payments'];
     default:
       return [];
   }
