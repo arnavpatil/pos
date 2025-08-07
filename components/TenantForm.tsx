@@ -286,7 +286,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
               {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
             </div>
 
-            <div>
+            {/* <div>
               <label htmlFor="cubeId" className="block text-sm font-medium text-gray-700 mb-1">
                 Cube *
               </label>
@@ -305,7 +305,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
                 ))}
               </select>
               {errors.cubeId && <p className="text-red-500 text-xs mt-1">{errors.cubeId}</p>}
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
