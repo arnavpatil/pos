@@ -1,6 +1,6 @@
 import { authService } from './authService';
 
-const API_BASE_URL = 'https://cornven-pos-system.vercel.app';
+const API_BASE_URL = '/api';
 
 export interface AddTenantRequest {
   name: string;

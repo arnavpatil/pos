@@ -1,6 +1,6 @@
 import { LoginCredentials, User } from '@/types/auth';
 
-const API_BASE_URL = 'https://cornven-pos-system.vercel.app';
+const API_BASE_URL = '/api';
 
 export interface LoginResponse {
   token: string;
