@@ -110,22 +110,7 @@ const LoginForm = () => {
         </form>
 
         {/* Demo Credentials */}
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-sm font-medium text-blue-900 mb-3">Demo Account</h3>
-          <div className="space-y-2">
-            {demoCredentials.map((demo, index) => (
-              <button
-                key={index}
-                onClick={() => fillDemoCredentials(demo.email, demo.password)}
-                className="w-full text-left p-2 text-xs bg-white rounded border hover:bg-blue-50 transition-colors"
-              >
-                <div className="font-medium text-blue-900">{demo.email}</div>
-                <div className="text-blue-600">{demo.role}</div>
-                <div className="text-gray-500 text-xs mt-1">Password: {demo.password}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+      
       </div>
     </div>
   );
