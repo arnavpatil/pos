@@ -1,5 +1,6 @@
 export interface Product {
   id: string;
+  sku: string;
   barcode: string;
   name: string;
   price: number;
@@ -16,6 +17,13 @@ export interface Product {
   updatedAt: string;
   createdBy: string;
   lowStockThreshold: number;
+  weight?: number;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
+  tags?: string[];
 }
 
 export interface ProductFormData {
@@ -61,4 +69,48 @@ export interface LowStockAlert {
   tenantName: string;
   createdAt: string;
   acknowledged: boolean;
+}
+
+export interface DeliveryLog {
+  id: string;
+  productId: string;
+  productName: string;
+  tenantId: string;
+  tenantName: string;
+  deliveryMethod: 'handover' | 'consignment';
+  quantity: number;
+  deliveryDate: string;
+  receivedBy: string;
+  deliveredBy: string;
+  status: 'pending' | 'delivered' | 'returned';
+  notes?: string;
+  signature?: string;
+  photos?: string[];
+}
+
+export interface BatchImportResult {
+  success: boolean;
+  totalRows: number;
+  successfulRows: number;
+  failedRows: number;
+  errors: {
+    row: number;
+    field: string;
+    message: string;
+  }[];
+  importedProducts: Product[];
+}
+
+export interface InventoryFilter {
+  category?: string;
+  tenantId?: string;
+  status?: 'active' | 'pending' | 'inactive';
+  deliveryMethod?: 'handover' | 'consignment';
+  lowStock?: boolean;
+  search?: string;
+  stockStatus?: 'low' | 'normal' | 'out' | '';
+  priceRange?: {
+    min?: number;
+    max?: number;
+  };
 }

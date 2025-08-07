@@ -79,6 +79,10 @@ const TenantProducts = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: user.id,
+        sku: `SKU-${user.tenantId}-${Date.now()}`,
+        weight: 0.1,
+        dimensions: { length: 10, width: 10, height: 2 },
+        tags: ['tenant-created']
       };
       
       setProducts(prev => [...prev, newProduct]);
