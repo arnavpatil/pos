@@ -30,8 +30,11 @@ export type LeaseStatus = 'Upcoming' | 'Active' | 'Expired';
 export interface TenantFormData {
   name: string;
   email: string;
+  password: string;
   businessName: string;
   contactNumber: string;
+  address: string;
+  notes?: string;
   cubeId: string;
   leaseStartDate: string;
   leaseEndDate: string;

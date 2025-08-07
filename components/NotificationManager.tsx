@@ -190,36 +190,39 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Bulk Notification Actions */}
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Bulk Notifications</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <button
             onClick={() => handleSendBulkNotifications('due')}
             disabled={isLoading}
-            className="btn-primary flex items-center justify-center space-x-2"
+            className="btn-primary flex items-center justify-center space-x-2 text-sm sm:text-base py-3"
           >
             <span>💰</span>
-            <span>Send Rent Due Reminders</span>
+            <span className="hidden sm:inline">Send Rent Due Reminders</span>
+            <span className="sm:hidden">Rent Due</span>
           </button>
           
           <button
             onClick={() => handleSendBulkNotifications('overdue')}
             disabled={isLoading}
-            className="btn-secondary flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white"
+            className="btn-secondary flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base py-3"
           >
             <span>⚠️</span>
-            <span>Send Overdue Notices</span>
+            <span className="hidden sm:inline">Send Overdue Notices</span>
+            <span className="sm:hidden">Overdue</span>
           </button>
           
           <button
             onClick={() => handleSendBulkNotifications('expiring')}
             disabled={isLoading}
-            className="btn-secondary flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white"
+            className="btn-secondary flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white text-sm sm:text-base py-3 sm:col-span-2 lg:col-span-1"
           >
             <span>📅</span>
-            <span>Send Lease Expiry Alerts</span>
+            <span className="hidden sm:inline">Send Lease Expiry Alerts</span>
+            <span className="sm:hidden">Lease Expiry</span>
           </button>
         </div>
       </div>
@@ -227,13 +230,13 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
       {/* Custom Notification */}
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Send Custom Notification</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Tenant</label>
             <select
               value={selectedTenant}
               onChange={(e) => setSelectedTenant(e.target.value)}
-              className="input-field"
+              className="input-field text-sm"
             >
               <option value="">Choose a tenant...</option>
               {tenants.map(tenant => (
@@ -249,7 +252,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
             <select
               value={notificationType}
               onChange={(e) => setNotificationType(e.target.value as any)}
-              className="input-field"
+              className="input-field text-sm"
             >
               <option value="rent_due">Rent Due Reminder</option>
               <option value="rent_overdue">Overdue Notice</option>
@@ -263,7 +266,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
           <textarea
             value={customMessage}
             onChange={(e) => setCustomMessage(e.target.value)}
-            className="input-field"
+            className="input-field text-sm resize-none"
             rows={3}
             placeholder="Add a custom message to include with the notification..."
           />
@@ -272,7 +275,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
         <button
           onClick={handleSendCustomNotification}
           disabled={isLoading || !selectedTenant}
-          className="btn-primary"
+          className="btn-primary w-full sm:w-auto text-sm sm:text-base"
         >
           Send Notification
         </button>
@@ -283,9 +286,35 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification History</h3>
         
         {notifications.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No notifications sent yet</p>
+          <p className="text-gray-500 text-center py-8 text-sm sm:text-base">No notifications sent yet</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="space-y-3 sm:hidden">
+            {/* Mobile card view */}
+            {notifications.map((notification) => (
+              <div key={notification.id} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span>{getTypeIcon(notification.type)}</span>
+                    <span className="text-sm font-medium capitalize">{notification.type.replace('_', ' ')}</span>
+                  </div>
+                  <span className={getStatusBadge(notification.status)}>
+                    {notification.status}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-900 font-medium mb-1">{notification.tenantName}</div>
+                <div className="text-xs text-gray-500 mb-2">
+                  {new Date(notification.timestamp).toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-600 line-clamp-2">{notification.message}</div>
+                <div className="text-xs text-gray-500 mt-1 capitalize">via {notification.method}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Desktop table view */}
+        {notifications.length > 0 && (
+          <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -337,10 +366,10 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Email Notifications</h4>
-              <p className="text-sm text-gray-500">Send notifications via email</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Email Notifications</h4>
+              <p className="text-xs sm:text-sm text-gray-500">Send notifications via email</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -348,10 +377,10 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
             </label>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">SMS Notifications</h4>
-              <p className="text-sm text-gray-500">Send notifications via SMS</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">SMS Notifications</h4>
+              <p className="text-xs sm:text-sm text-gray-500">Send notifications via SMS</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -359,10 +388,10 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
             </label>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Auto-send Rent Reminders</h4>
-              <p className="text-sm text-gray-500">Automatically send reminders 3 days before rent is due</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Auto-send Rent Reminders</h4>
+              <p className="text-xs sm:text-sm text-gray-500">Automatically send reminders 3 days before rent is due</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />

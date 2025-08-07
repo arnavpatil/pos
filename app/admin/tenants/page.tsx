@@ -19,7 +19,7 @@ type TabType = 'list' | 'lease' | 'rent' | 'notifications';
 export default function TenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('list');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -208,7 +208,6 @@ export default function TenantsPage() {
                 </button>
               </div>
               <TenantList
-                tenants={tenants}
                 onViewTenant={handleViewTenant}
                 onAddNew={handleAddTenant}
               />

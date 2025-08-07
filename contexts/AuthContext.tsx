@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthState, LoginCredentials, SignupData } from '@/types/auth';
-import { authenticateUser, createUser } from '@/data/mockAuth';
+import { authService } from '@/services/authService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
@@ -30,11 +30,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for existing session on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('cornven_user');
-    if (savedUser) {
+    const token = authService.getAuthToken();
+    
+    if (savedUser && token) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (error) {
         localStorage.removeItem('cornven_user');
+        authService.removeAuthToken();
       }
     }
     setIsLoading(false);
@@ -45,20 +48,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const authenticatedUser = await authenticateUser(credentials.email, credentials.password);
+      const { user, token } = await authService.login(credentials);
       
-      if (authenticatedUser) {
-        setUser(authenticatedUser);
-        localStorage.setItem('cornven_user', JSON.stringify(authenticatedUser));
-        setIsLoading(false);
-        return true;
-      } else {
-        setError('Invalid email or password');
-        setIsLoading(false);
-        return false;
-      }
+      // Store user data and token
+      setUser(user);
+      localStorage.setItem('cornven_user', JSON.stringify(user));
+      authService.setAuthToken(token);
+      
+      setIsLoading(false);
+      return true;
     } catch (err) {
-      setError('Login failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(errorMessage);
       setIsLoading(false);
       return false;
     }
@@ -69,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
+      // Basic validation
       if (data.password !== data.confirmPassword) {
         setError('Passwords do not match');
         setIsLoading(false);
@@ -81,17 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      const newUser = await createUser({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role as 'admin' | 'inventory' | 'pos'
-      });
-      
-      setUser(newUser);
-      localStorage.setItem('cornven_user', JSON.stringify(newUser));
+      // TODO: Implement signup API when available
+      setError('Signup functionality is not available yet. Please contact the administrator.');
       setIsLoading(false);
-      return true;
+      return false;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
       setIsLoading(false);
@@ -102,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('cornven_user');
+    authService.removeAuthToken();
     setError(null);
   };
 
