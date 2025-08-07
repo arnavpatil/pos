@@ -13,13 +13,7 @@ export interface LoginCredentials {
   password: string;
 }
 
-export interface SignupData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: 'admin' | 'inventory' | 'pos' | 'tenant';
-}
+
 
 export interface AuthState {
   user: User | null;

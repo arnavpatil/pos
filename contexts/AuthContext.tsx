@@ -1,12 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState, LoginCredentials, SignupData } from '@/types/auth';
+import { User, AuthState, LoginCredentials } from '@/types/auth';
 import { authService } from '@/services/authService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
-  signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
   error: string | null;
   clearError: () => void;
@@ -65,34 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (data: SignupData): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Basic validation
-      if (data.password !== data.confirmPassword) {
-        setError('Passwords do not match');
-        setIsLoading(false);
-        return false;
-      }
-      
-      if (data.password.length < 6) {
-        setError('Password must be at least 6 characters long');
-        setIsLoading(false);
-        return false;
-      }
-      
-      // TODO: Implement signup API when available
-      setError('Signup functionality is not available yet. Please contact the administrator.');
-      setIsLoading(false);
-      return false;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
-      setIsLoading(false);
-      return false;
-    }
-  };
+
 
   const logout = () => {
     setUser(null);
@@ -110,7 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     isLoading,
     login,
-    signup,
     logout,
     error,
     clearError

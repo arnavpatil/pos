@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginForm from '@/components/LoginForm';
-import SignupForm from '@/components/SignupForm';
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
@@ -32,15 +30,7 @@ const AuthPage = () => {
     return null; // Will redirect
   }
 
-  return (
-    <>
-      {isLogin ? (
-        <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
-      ) : (
-        <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
-      )}
-    </>
-  );
+  return <LoginForm />;
 };
 
 export default AuthPage;

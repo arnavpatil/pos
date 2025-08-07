@@ -4,11 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginCredentials } from '@/types/auth';
 
-interface LoginFormProps {
-  onSwitchToSignup: () => void;
-}
-
-const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
+const LoginForm = () => {
   const { login, error, isLoading, clearError } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
@@ -110,15 +106,7 @@ const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
             )}
           </button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={onSwitchToSignup}
-              className="text-primary-600 hover:text-primary-500 text-sm font-medium"
-            >
-              Don't have an account? Sign up
-            </button>
-          </div>
+
         </form>
 
         {/* Demo Credentials */}

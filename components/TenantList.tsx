@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { Tenant } from '@/types/tenant';
-import { tenantService, ViewTenantsResponse } from '@/services/tenantService';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Tenant } from '../types/tenant';
 
 interface TenantListProps {
   tenants?: Tenant[];
@@ -10,59 +9,123 @@ interface TenantListProps {
   onAddNew: () => void;
 }
 
-const TenantList = ({ tenants: propTenants, onViewTenant, onAddNew }: TenantListProps) => {
+export default function TenantList({ tenants: propTenants, onViewTenant, onAddNew }: TenantListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [apiTenants, setApiTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  
-  // Use API data if no prop tenants provided
-  const tenants = propTenants || apiTenants;
+  const [error, setError] = useState<string | null>(null);
 
-  // Convert API response to local Tenant format
-  const convertApiToTenant = (apiData: ViewTenantsResponse): Tenant => {
-    const rental = apiData.rentals[0]; // Get the first rental (assuming one active rental per tenant)
-    
-    return {
-      id: apiData.id,
-      name: apiData.user.name,
-      email: apiData.user.email,
-      contactNumber: apiData.user.phone,
-      businessName: apiData.businessName,
-      cubeId: rental?.cube.code || 'N/A',
-      leaseStartDate: rental?.startDate ? new Date(rental.startDate).toISOString().split('T')[0] : '',
-      leaseEndDate: rental?.endDate ? new Date(rental.endDate).toISOString().split('T')[0] : '',
-      status: rental?.status === 'ACTIVE' ? 'Active' : 
-              rental?.status === 'PENDING' ? 'Upcoming' : 'Expired',
-      rentPayments: [], // This would need to be fetched separately if needed
-      monthlyRent: rental?.monthlyRent || 0,
-      notes: apiData.notes || '',
-      address: apiData.address || ''
-    };
-  };
 
-  // Fetch tenants from API if no prop tenants provided
+
+  // Use dummy data for now instead of API calls
   useEffect(() => {
     if (!propTenants) {
-      const fetchTenants = async () => {
-        setIsLoading(true);
-        setError('');
+      setIsLoading(true);
+      
+      // Simulate loading delay
+      setTimeout(() => {
+        const dummyTenants: Tenant[] = [
+          {
+            id: '1',
+            name: 'John Smith',
+            email: 'john.smith@example.com',
+            contactNumber: '+61412345678',
+            businessName: 'Smith Electronics',
+            cubeId: 'A-101',
+            leaseStartDate: '2024-01-01',
+            leaseEndDate: '2024-12-31',
+            status: 'Active',
+            rentPayments: [
+              {
+                id: 'p1',
+                amount: 1200,
+                method: 'Bank Transfer',
+                date: '2024-01-01',
+                tenantId: '1',
+                status: 'completed'
+              }
+            ],
+            monthlyRent: 1200,
+            phone: '+61412345678',
+            businessType: 'Electronics',
+            securityDeposit: 2400
+          },
+          {
+            id: '2',
+            name: 'Sarah Johnson',
+            email: 'sarah.johnson@example.com',
+            contactNumber: '+61423456789',
+            businessName: 'Johnson Boutique',
+            cubeId: 'B-205',
+            leaseStartDate: '2024-02-15',
+            leaseEndDate: '2025-02-14',
+            status: 'Active',
+            rentPayments: [
+              {
+                id: 'p2',
+                amount: 950,
+                method: 'Card',
+                date: '2024-02-15',
+                tenantId: '2',
+                status: 'completed'
+              }
+            ],
+            monthlyRent: 950,
+            phone: '+61423456789',
+            businessType: 'Fashion Retail',
+            securityDeposit: 1900
+          },
+          {
+            id: '3',
+            name: 'Mike Chen',
+            email: 'mike.chen@example.com',
+            contactNumber: '+61434567890',
+            businessName: 'Chen Tech Solutions',
+            cubeId: 'C-312',
+            leaseStartDate: '2024-03-01',
+            leaseEndDate: '2024-08-31',
+            status: 'Expired',
+            rentPayments: [
+              {
+                id: 'p3',
+                amount: 1500,
+                method: 'Bank Transfer',
+                date: '2024-03-01',
+                tenantId: '3',
+                status: 'completed'
+              }
+            ],
+            monthlyRent: 1500,
+            phone: '+61434567890',
+            businessType: 'IT Services',
+            securityDeposit: 3000
+          },
+          {
+            id: '4',
+            name: 'Emma Wilson',
+            email: 'emma.wilson@example.com',
+            contactNumber: '+61445678901',
+            businessName: 'Wilson Crafts',
+            cubeId: 'D-108',
+            leaseStartDate: '2024-06-01',
+            leaseEndDate: '2025-05-31',
+            status: 'Upcoming',
+            rentPayments: [],
+            monthlyRent: 800,
+            phone: '+61445678901',
+            businessType: 'Crafts & Jewelry',
+            securityDeposit: 1600
+          }
+        ];
         
-        try {
-          const response = await tenantService.viewAllTenants();
-          const convertedTenants = response.map(convertApiToTenant);
-          setApiTenants(convertedTenants);
-        } catch (err) {
-          console.error('Error fetching tenants:', err);
-          setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchTenants();
+        setApiTenants(dummyTenants);
+        setIsLoading(false);
+      }, 1000); // 1 second delay to simulate loading
     }
   }, [propTenants]);
+
+  // Use prop tenants if provided, otherwise use API tenants
+  const tenants = propTenants || apiTenants;
 
   const filteredTenants = useMemo(() => {
     if (!searchTerm) return tenants;
@@ -262,6 +325,4 @@ const TenantList = ({ tenants: propTenants, onViewTenant, onAddNew }: TenantList
       )}
     </div>
   );
-};
-
-export default TenantList;
+}
