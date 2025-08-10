@@ -106,7 +106,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
         case 'rent_due':
           await notificationService.sendRentDueNotification(
             tenant.email,
-            tenant.contactNumber,
+            tenant.phone,
             tenant.name,
             200, // Default amount
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -116,7 +116,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
         case 'rent_overdue':
           await notificationService.sendOverdueNotification(
             tenant.email,
-            tenant.contactNumber,
+            tenant.phone,
             tenant.name,
             200,
             5 // 5 days overdue
@@ -126,7 +126,7 @@ const NotificationManager = ({ tenants }: NotificationManagerProps) => {
         case 'lease_expiring':
           await notificationService.sendLeaseExpiringNotification(
             tenant.email,
-            tenant.contactNumber,
+            tenant.phone,
             tenant.name,
             tenant.leaseEndDate,
             30

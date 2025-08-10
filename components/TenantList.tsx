@@ -17,110 +17,14 @@ export default function TenantList({ tenants: propTenants, onViewTenant, onAddNe
 
 
 
-  // Use dummy data for now instead of API calls
+  // No longer using dummy data - relying on props from parent component
   useEffect(() => {
     if (!propTenants) {
       setIsLoading(true);
-      
-      // Simulate loading delay
-      setTimeout(() => {
-        const dummyTenants: Tenant[] = [
-          {
-            id: '1',
-            name: 'John Smith',
-            email: 'john.smith@example.com',
-            contactNumber: '+61412345678',
-            businessName: 'Smith Electronics',
-            cubeId: 'A-101',
-            leaseStartDate: '2024-01-01',
-            leaseEndDate: '2024-12-31',
-            status: 'Active',
-            rentPayments: [
-              {
-                id: 'p1',
-                amount: 1200,
-                method: 'Bank Transfer',
-                date: '2024-01-01',
-                tenantId: '1',
-                status: 'completed'
-              }
-            ],
-            monthlyRent: 1200,
-            phone: '+61412345678',
-            businessType: 'Electronics',
-            securityDeposit: 2400
-          },
-          {
-            id: '2',
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@example.com',
-            contactNumber: '+61423456789',
-            businessName: 'Johnson Boutique',
-            cubeId: 'B-205',
-            leaseStartDate: '2024-02-15',
-            leaseEndDate: '2025-02-14',
-            status: 'Active',
-            rentPayments: [
-              {
-                id: 'p2',
-                amount: 950,
-                method: 'Card',
-                date: '2024-02-15',
-                tenantId: '2',
-                status: 'completed'
-              }
-            ],
-            monthlyRent: 950,
-            phone: '+61423456789',
-            businessType: 'Fashion Retail',
-            securityDeposit: 1900
-          },
-          {
-            id: '3',
-            name: 'Mike Chen',
-            email: 'mike.chen@example.com',
-            contactNumber: '+61434567890',
-            businessName: 'Chen Tech Solutions',
-            cubeId: 'C-312',
-            leaseStartDate: '2024-03-01',
-            leaseEndDate: '2024-08-31',
-            status: 'Expired',
-            rentPayments: [
-              {
-                id: 'p3',
-                amount: 1500,
-                method: 'Bank Transfer',
-                date: '2024-03-01',
-                tenantId: '3',
-                status: 'completed'
-              }
-            ],
-            monthlyRent: 1500,
-            phone: '+61434567890',
-            businessType: 'IT Services',
-            securityDeposit: 3000
-          },
-          {
-            id: '4',
-            name: 'Emma Wilson',
-            email: 'emma.wilson@example.com',
-            contactNumber: '+61445678901',
-            businessName: 'Wilson Crafts',
-            cubeId: 'D-108',
-            leaseStartDate: '2024-06-01',
-            leaseEndDate: '2025-05-31',
-            status: 'Upcoming',
-            rentPayments: [],
-            monthlyRent: 800,
-            phone: '+61445678901',
-            businessType: 'Crafts & Jewelry',
-            securityDeposit: 1600
-          }
-        ];
-        
-        setApiTenants(dummyTenants);
-        setIsLoading(false);
-      }, 1000); // 1 second delay to simulate loading
+      setApiTenants([]);
+    } else {
+      setIsLoading(false);
+      setApiTenants([]);
     }
   }, [propTenants]);
 

@@ -10,11 +10,47 @@ import LeaseManagement from '@/components/LeaseManagement';
 import RentCollection from '@/components/RentCollection';
 import NotificationManager from '@/components/NotificationManager';
 import { Tenant, TenantFormData, RentPayment } from '@/types/tenant';
-import { mockTenants, mockRentPayments } from '@/data/mockData';
 import { getRolePermissions } from '@/data/mockAuth';
-import { calculateLeaseStatus } from '@/data/mockData';
 
 type TabType = 'list' | 'lease' | 'rent' | 'notifications';
+
+interface ApiTenant {
+  id: string;
+  userId: string;
+  businessName: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  rentals: Array<{
+    id: string;
+    tenantId: string;
+    cubeId: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    monthlyRent: number;
+    lastPayment: string | null;
+    createdAt: string;
+    updatedAt: string;
+    allocatedById: string;
+    cube?: {
+      id: string;
+      code: string;
+      size: string;
+      pricePerMonth: number;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
+}
 
 export default function TenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -23,6 +59,58 @@ export default function TenantsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('list');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch tenants from API
+  const fetchTenants = async () => {
+    try {
+      const token = localStorage.getItem('cornven_token');
+      const response = await fetch('/api/admin/tenants-allocations', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const apiTenants: ApiTenant[] = await response.json();
+        // Convert API tenants to the format expected by the UI
+        const convertedTenants: Tenant[] = apiTenants.map(apiTenant => {
+          const apiStatus = apiTenant.rentals[0]?.status || 'INACTIVE';
+          let status: 'Upcoming' | 'Active' | 'Expired' = 'Expired';
+          
+          if (apiStatus === 'ACTIVE') {
+            status = 'Active';
+          } else if (apiStatus === 'UPCOMING') {
+            status = 'Upcoming';
+          } else {
+            status = 'Expired';
+          }
+          
+          return {
+            id: apiTenant.id,
+            name: apiTenant.user.name,
+            email: apiTenant.user.email,
+            phone: apiTenant.user.phone,
+            businessName: apiTenant.businessName,
+            cubeId: apiTenant.rentals[0]?.cube?.code || '',
+            leaseStartDate: apiTenant.rentals[0]?.startDate || '',
+            leaseEndDate: apiTenant.rentals[0]?.endDate || '',
+            monthlyRent: apiTenant.rentals[0]?.monthlyRent || 0,
+            securityDeposit: 0, // Not in API
+            status,
+            rentPayments: [], // Not in current API structure
+            address: apiTenant.address,
+            notes: apiTenant.notes
+          };
+        });
+        setTenants(convertedTenants);
+      }
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,9 +122,13 @@ export default function TenantsPage() {
       router.push('/');
       return;
     }
+
+    if (isAuthenticated && user) {
+      fetchTenants();
+    }
   }, [isAuthenticated, isLoading, user, router]);
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center">
@@ -60,20 +152,40 @@ export default function TenantsPage() {
     router.push(`/admin/tenants/${tenantId}`);
   };
 
-  const handleSubmitTenant = (tenant: Tenant) => {
+  const handleSubmitTenant = async (tenant: Tenant) => {
     if (editingTenant) {
-      // Update existing tenant
+      // Update existing tenant - would need API endpoint for updates
       setTenants(prev => prev.map(t => t.id === tenant.id ? tenant : t));
     } else {
-      // Add new tenant
+      // Add new tenant - TenantForm already handles the API call
+      // Just add the tenant to the local state and refresh the list
       setTenants(prev => [...prev, tenant]);
+      setIsFormOpen(false);
+      
+      // Optionally refresh the tenant list to get the latest data from server
+      setTimeout(() => {
+        fetchTenants();
+      }, 1000);
     }
   };
 
   const handleUpdateLease = (tenantId: string, startDate: string, endDate: string) => {
+    // Calculate status based on dates
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    let status: 'Upcoming' | 'Active' | 'Expired' = 'Expired';
+    
+    if (now < start) {
+      status = 'Upcoming';
+    } else if (now >= start && now <= end) {
+      status = 'Active';
+    } else {
+      status = 'Expired';
+    }
+
     setTenants(prev => prev.map(tenant => {
       if (tenant.id === tenantId) {
-        const status = calculateLeaseStatus(startDate, endDate);
         return {
           ...tenant,
           leaseStartDate: startDate,
@@ -208,6 +320,7 @@ export default function TenantsPage() {
                 </button>
               </div>
               <TenantList
+                tenants={tenants}
                 onViewTenant={handleViewTenant}
                 onAddNew={handleAddTenant}
               />

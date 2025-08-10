@@ -1,34 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE_URL = 'https://cornven-pos-system.vercel.app';
+import { authenticateUser } from '@/data/mockAuth';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    // Forward the request to the external API
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    const { email, password } = body;
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: data.message || 'Login failed' },
-        { status: response.status }
+        { error: 'Email and password are required' },
+        { status: 400 }
       );
     }
 
-    // Return the successful response
-    return NextResponse.json(data, { status: 200 });
-    
+    // Use local mock authentication
+    const user = await authenticateUser(email, password);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
+
+    // Generate a mock JWT token
+    const token = uuidv4();
+
+    // Return user data and token in the expected format
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tenantId: user.tenantId,
+        artistId: user.artistId,
+        createdAt: user.createdAt
+      },
+      token
+    });
   } catch (error) {
-    console.error('Login API Error:', error);
+    console.error('Login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -4,15 +4,55 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import { Tenant } from '@/types/tenant';
-import { mockTenants } from '@/data/mockData';
 import { getRolePermissions } from '@/data/mockAuth';
+import { authService } from '@/services/authService';
+
+// Define the tenant interface based on the new API structure
+interface ApiTenant {
+  id: string;
+  userId: string;
+  businessName: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  rentals: Array<{
+    id: string;
+    tenantId: string;
+    cubeId: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    monthlyRent: number;
+    lastPayment: string | null;
+    createdAt: string;
+    updatedAt: string;
+    allocatedById: string;
+    cube: {
+      id: string;
+      code: string;
+      size: string;
+      pricePerMonth: number;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
+}
 
 export default function TenantDetailsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tenant, setTenant] = useState<ApiTenant | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -25,13 +65,38 @@ export default function TenantDetailsPage() {
       return;
     }
 
-    // Find the tenant by ID
-    const tenantId = params.id as string;
-    const foundTenant = mockTenants.find(t => t.id === tenantId);
-    setTenant(foundTenant || null);
+    // Fetch tenant data from API
+    const fetchTenant = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/admin/tenants-allocations', {
+          headers: {
+            'Authorization': `Bearer ${authService.getAuthToken()}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch tenants');
+        }
+
+        const tenants: ApiTenant[] = await response.json();
+        const tenantId = params.id as string;
+        const foundTenant = tenants.find(t => t.id === tenantId);
+        
+        setTenant(foundTenant || null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch tenant');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      fetchTenant();
+    }
   }, [isAuthenticated, isLoading, user, router, params.id]);
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center">
@@ -44,6 +109,26 @@ export default function TenantDetailsPage() {
 
   if (!isAuthenticated || !user || !getRolePermissions(user.role).includes('tenants')) {
     return null; // Will redirect
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Tenant</h1>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => router.push('/admin/tenants')}
+              className="btn-primary"
+            >
+              Back to Tenant List
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!tenant) {
@@ -69,12 +154,12 @@ export default function TenantDetailsPage() {
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 text-sm font-medium rounded-full";
     
-    switch (status) {
-      case 'Active':
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
         return `${baseClasses} bg-green-100 text-green-800`;
-      case 'Upcoming':
+      case 'UPCOMING':
         return `${baseClasses} bg-blue-100 text-blue-800`;
-      case 'Expired':
+      case 'EXPIRED':
         return `${baseClasses} bg-red-100 text-red-800`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800`;
@@ -97,21 +182,23 @@ export default function TenantDetailsPage() {
   };
 
   const downloadPaymentHistory = () => {
-    if (!tenant || !tenant.rentPayments || tenant.rentPayments.length === 0) {
-      alert('No payment history available for this tenant');
+    if (!tenant || !tenant.rentals || tenant.rentals.length === 0) {
+      alert('No rental history available for this tenant');
       return;
     }
 
-    // Create CSV content
-    const headers = ['Date', 'Amount', 'Payment Method', 'Status', 'Notes'];
+    // Create CSV content for rentals
+    const headers = ['Rental ID', 'Cube Code', 'Start Date', 'End Date', 'Status', 'Monthly Rent', 'Last Payment'];
     const csvContent = [
       headers.join(','),
-      ...tenant.rentPayments.map(payment => [
-        new Date(payment.date).toLocaleDateString(),
-        `$${payment.amount}`,
-        payment.method,
-        payment.status,
-        payment.notes || ''
+      ...tenant.rentals.map(rental => [
+        rental.id,
+        rental.cube?.code || 'N/A',
+        new Date(rental.startDate).toLocaleDateString(),
+        new Date(rental.endDate).toLocaleDateString(),
+        rental.status,
+        `$${rental.monthlyRent}`,
+        rental.lastPayment ? new Date(rental.lastPayment).toLocaleDateString() : 'No payment'
       ].join(','))
     ].join('\n');
 
@@ -120,7 +207,7 @@ export default function TenantDetailsPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `payment-history-${tenant.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `rental-history-${tenant.user.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -145,11 +232,11 @@ export default function TenantDetailsPage() {
                 </svg>
                 Back to Tenant List
               </button>
-              <h1 className="text-3xl font-bold text-gray-900">{tenant.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{tenant.user.name}</h1>
               <p className="text-gray-600 mt-1">{tenant.businessName}</p>
             </div>
-            <span className={getStatusBadge(tenant.status)}>
-              {tenant.status}
+            <span className={getStatusBadge(tenant.rentals[0]?.status || 'INACTIVE')}>
+              {tenant.rentals[0]?.status || 'INACTIVE'}
             </span>
           </div>
         </div>
@@ -163,61 +250,83 @@ export default function TenantDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <p className="text-gray-900">{tenant.name}</p>
+                  <p className="text-gray-900">{tenant.user.name}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <p className="text-gray-900">{tenant.email}</p>
+                  <p className="text-gray-900">{tenant.user.email}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <p className="text-gray-900">{tenant.phone}</p>
+                  <p className="text-gray-900">{tenant.user.phone}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
                   <p className="text-gray-900">{tenant.businessName}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
-                  <p className="text-gray-900">{tenant.businessType}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <p className="text-gray-900">{tenant.address}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cube ID</label>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    {tenant.cubeId}
-                  </span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <p className="text-gray-900">{tenant.notes || 'No notes'}</p>
                 </div>
               </div>
             </div>
 
-            {/* Lease Information */}
+            {/* Rental Information */}
             <div className="card">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Lease Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lease Start Date</label>
-                  <p className="text-gray-900">{formatDate(tenant.leaseStartDate)}</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Rental Information</h2>
+              {tenant.rentals && tenant.rentals.length > 0 ? (
+                <div className="space-y-4">
+                  {tenant.rentals.map((rental) => (
+                    <div key={rental.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Cube Code</label>
+                          <p className="text-gray-900 font-semibold">{rental.cube?.code || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Cube Size</label>
+                          <p className="text-gray-900">{rental.cube?.size || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                          <p className="text-gray-900">{formatDate(rental.startDate)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                          <p className="text-gray-900">{formatDate(rental.endDate)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent</label>
+                          <p className="text-gray-900 text-lg font-semibold">{formatCurrency(rental.monthlyRent || 0)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                          <span className={getStatusBadge(rental.status)}>
+                            {rental.status}
+                          </span>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Last Payment</label>
+                          <p className="text-gray-900">{rental.lastPayment ? formatDate(rental.lastPayment) : 'No payment yet'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lease End Date</label>
-                  <p className="text-gray-900">{formatDate(tenant.leaseEndDate)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent</label>
-                  <p className="text-gray-900 text-lg font-semibold">{formatCurrency(tenant.monthlyRent || 0)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Security Deposit</label>
-                  <p className="text-gray-900">{formatCurrency(tenant.securityDeposit || 0)}</p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No rental information available</p>
+              )}
             </div>
 
-            {/* Payment History */}
+            {/* Rental History */}
             <div className="card">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
-                {tenant.rentPayments && tenant.rentPayments.length > 0 && (
+                <h2 className="text-xl font-semibold text-gray-900">Rental History</h2>
+                {tenant.rentals && tenant.rentals.length > 0 && (
                   <button
                     onClick={downloadPaymentHistory}
                     className="btn-secondary flex items-center space-x-2 text-sm"
@@ -229,43 +338,39 @@ export default function TenantDetailsPage() {
                   </button>
                 )}
               </div>
-              {tenant.rentPayments && tenant.rentPayments.length > 0 ? (
+              {tenant.rentals && tenant.rentals.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="table-header">Date</th>
-                        <th className="table-header">Amount</th>
-                        <th className="table-header">Method</th>
+                        <th className="table-header">Cube Code</th>
+                        <th className="table-header">Start Date</th>
+                        <th className="table-header">End Date</th>
+                        <th className="table-header">Monthly Rent</th>
                         <th className="table-header">Status</th>
-                        <th className="table-header">Notes</th>
+                        <th className="table-header">Last Payment</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {tenant.rentPayments.map((payment) => (
-                        <tr key={payment.id} className="hover:bg-gray-50">
-                          <td className="table-cell">{formatDate(payment.date)}</td>
-                          <td className="table-cell font-medium">{formatCurrency(payment.amount)}</td>
-                          <td className="table-cell capitalize">{payment.method}</td>
+                      {tenant.rentals.map((rental) => (
+                        <tr key={rental.id} className="hover:bg-gray-50">
+                          <td className="table-cell font-medium">{rental.cube?.code || 'N/A'}</td>
+                          <td className="table-cell">{formatDate(rental.startDate)}</td>
+                          <td className="table-cell">{formatDate(rental.endDate)}</td>
+                          <td className="table-cell font-medium">{formatCurrency(rental.monthlyRent)}</td>
                           <td className="table-cell">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              payment.status === 'completed' 
-                                ? 'bg-green-100 text-green-800'
-                                : payment.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {payment.status}
+                            <span className={getStatusBadge(rental.status)}>
+                              {rental.status}
                             </span>
                           </td>
-                          <td className="table-cell text-gray-500">{payment.notes || '-'}</td>
+                          <td className="table-cell text-gray-500">{rental.lastPayment ? formatDate(rental.lastPayment) : 'No payment yet'}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">No payment history available</p>
+                <p className="text-gray-500 text-center py-4">No rental history available</p>
               )}
             </div>
           </div>
@@ -277,26 +382,27 @@ export default function TenantDetailsPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Payments</span>
-                  <span className="font-medium">{tenant.rentPayments?.length || 0}</span>
+                  <span className="text-gray-600">Active Rentals</span>
+                  <span className="font-medium">{tenant.rentals?.filter(r => r.status === 'ACTIVE').length || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Paid</span>
+                  <span className="text-gray-600">Total Rentals</span>
+                  <span className="font-medium">{tenant.rentals?.length || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Monthly Rent</span>
                   <span className="font-medium">
                     {formatCurrency(
-                      tenant.rentPayments?.reduce((sum, payment) => 
-                        payment.status === 'completed' ? sum + payment.amount : sum, 0
+                      tenant.rentals?.reduce((sum, rental) => 
+                        rental.status === 'ACTIVE' ? sum + rental.monthlyRent : sum, 0
                       ) || 0
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Lease Duration</span>
+                  <span className="text-gray-600">Member Since</span>
                   <span className="font-medium">
-                    {Math.ceil(
-                      (new Date(tenant.leaseEndDate).getTime() - new Date(tenant.leaseStartDate).getTime()) 
-                      / (1000 * 60 * 60 * 24 * 30)
-                    )} months
+                    {formatDate(tenant.createdAt)}
                   </span>
                 </div>
               </div>
@@ -308,14 +414,14 @@ export default function TenantDetailsPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <a href={`mailto:${tenant.email}`} className="text-primary-600 hover:text-primary-800">
-                    {tenant.email}
+                  <a href={`mailto:${tenant.user.email}`} className="text-primary-600 hover:text-primary-800">
+                    {tenant.user.email}
                   </a>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <a href={`tel:${tenant.phone}`} className="text-primary-600 hover:text-primary-800">
-                    {tenant.phone}
+                  <a href={`tel:${tenant.user.phone}`} className="text-primary-600 hover:text-primary-800">
+                    {tenant.user.phone}
                   </a>
                 </div>
               </div>

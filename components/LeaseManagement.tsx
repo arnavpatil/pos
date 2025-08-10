@@ -145,7 +145,7 @@ const LeaseManagement = ({ tenants, onUpdateLease }: LeaseManagementProps) => {
                   <div><span className="font-medium">Business:</span> <span className="truncate">{selectedTenantData.businessName}</span></div>
                   <div><span className="font-medium">Cube:</span> {selectedTenantData.cubeId}</div>
                   <div><span className="font-medium">Email:</span> <span className="truncate">{selectedTenantData.email}</span></div>
-                  <div><span className="font-medium">Contact:</span> {selectedTenantData.contactNumber}</div>
+                  <div><span className="font-medium">Contact:</span> {selectedTenantData.phone}</div>
                 </div>
               </div>
 

@@ -13,16 +13,17 @@ export interface Tenant {
   name: string;
   email: string;
   businessName: string;
-  contactNumber: string;
+  phone: string;
   cubeId: string;
   leaseStartDate: string;
   leaseEndDate: string;
   status: 'Upcoming' | 'Active' | 'Expired';
   rentPayments: RentPayment[];
-  phone?: string;
   businessType?: string;
   monthlyRent?: number;
   securityDeposit?: number;
+  address?: string;
+  notes?: string;
 }
 
 export type LeaseStatus = 'Upcoming' | 'Active' | 'Expired';
@@ -32,10 +33,7 @@ export interface TenantFormData {
   email: string;
   password: string;
   businessName: string;
-  contactNumber: string;
+  phone: string;
   address: string;
-  notes?: string;
-  cubeId: string;
-  leaseStartDate: string;
-  leaseEndDate: string;
+  notes: string;
 }

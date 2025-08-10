@@ -271,7 +271,7 @@ export const checkRentDueNotifications = async (tenants: any[]): Promise<void> =
     if (nextRentDue <= threeDaysFromNow && nextRentDue > today) {
       await notificationService.sendRentDueNotification(
         tenant.email,
-        tenant.contactNumber,
+        tenant.phone,
         tenant.name,
         tenant.monthlyRent || 200, // Default rent amount
         nextRentDue.toISOString()
@@ -295,7 +295,7 @@ export const checkOverdueNotifications = async (tenants: any[]): Promise<void> =
       if (daysSinceLastPayment > 30) { // Assuming monthly rent cycle
         await notificationService.sendOverdueNotification(
           tenant.email,
-          tenant.contactNumber,
+          tenant.phone,
           tenant.name,
           tenant.monthlyRent || 200,
           daysSinceLastPayment - 30
@@ -317,7 +317,7 @@ export const checkLeaseExpiryNotifications = async (tenants: any[]): Promise<voi
       
       await notificationService.sendLeaseExpiringNotification(
         tenant.email,
-        tenant.contactNumber,
+        tenant.phone,
         tenant.name,
         tenant.leaseEndDate,
         daysUntilExpiry
