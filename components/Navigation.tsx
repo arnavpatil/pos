@@ -25,11 +25,11 @@ const Navigation = () => {
     const baseItems = [];
     
     // Admin items
-    if (userPermissions.includes('admin-dashboard')) {
-      baseItems.push({ name: 'Dashboard', href: '/admin', permission: 'admin-dashboard' });
+    if (userPermissions.includes('tenants')) {
+      baseItems.push({ name: 'Dashboard', href: '/admin', permission: 'tenants' });
     }
-    if (userPermissions.includes('admin-products')) {
-      baseItems.push({ name: 'Products', href: '/admin/products', permission: 'admin-products' });
+    if (userPermissions.includes('tenants')) {
+      baseItems.push({ name: 'Tenants', href: '/admin/tenants', permission: 'tenants' });
     }
     if (userPermissions.includes('admin-sales')) {
       baseItems.push({ name: 'Sales', href: '/admin/sales', permission: 'admin-sales' });
@@ -101,8 +101,11 @@ const Navigation = () => {
             </div>
             <button
               onClick={handleLogout}
-              className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               Logout
             </button>
           </div>
@@ -166,8 +169,11 @@ const Navigation = () => {
               <div className="mt-3 px-2 space-y-1">
                 <button
                   onClick={handleLogout}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 w-full text-left transition-colors"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-red-600 hover:bg-red-700 w-full transition-colors"
                 >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                   Logout
                 </button>
               </div>

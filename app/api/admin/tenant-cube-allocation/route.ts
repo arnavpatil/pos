@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { mockCubes } from '../cubes/route';
+import { mockCubes } from '../../../../data/mockCubes';
 
 // Mock storage for allocations
 let storedAllocations: any[] = [];

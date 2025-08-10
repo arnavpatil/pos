@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-
-// Mock storage for tenants (in a real app, this would be a database)
-let storedTenants: any[] = [];
+import { addTenant } from '../../../../data/mockTenants';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,7 +92,7 @@ export async function POST(request: NextRequest) {
       rentals: []
     };
 
-    storedTenants.push(tenantForStorage);
+    addTenant(tenantForStorage);
 
     return NextResponse.json(response, { status: 200 });
     

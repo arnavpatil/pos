@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockCubes } from '../cubes/route';
-
-// Import stored tenants from add-tenant API
-// In a real app, this would be from a shared database
-let storedTenants: any[] = [];
-let storedAllocations: any[] = [];
+import { mockCubes } from '../../../../data/mockCubes';
+import { storedTenants } from '../../../../data/mockTenants';
 
 export async function GET(request: NextRequest) {
   try {
@@ -120,6 +116,3 @@ export async function OPTIONS() {
     },
   });
 }
-
-// Export the stored tenants for use in other APIs
-export { storedTenants };
