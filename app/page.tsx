@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { getRolePermissions } from '@/data/mockAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { getRolePermissions, getRoleDisplayName } from '@/data/mockAuth';
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -13,19 +13,9 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/auth');
-    } else if (!isLoading && isAuthenticated && user) {
-      // Redirect tenant users to their dashboard
-      if (user.role === 'tenant') {
-        router.push('/tenant');
-        return;
-      }
-      // Redirect admin users to admin dashboard
-      if (user.role === 'admin') {
-        router.push('/admin');
-        return;
-      }
     }
-  }, [isAuthenticated, isLoading, router, user]);
+    // Remove automatic redirects - let users choose their module from the dashboard
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -151,6 +141,27 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+      {/* Header with user info and logout */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-lg font-semibold text-gray-900">Cornven POS</h2>
+            <span className="text-gray-500">|</span>
+            <span className="text-gray-600">{user.name} ({getRoleDisplayName(user.role)})</span>
+          </div>
+          <button
+            onClick={() => {
+              // Clear localStorage and logout
+              localStorage.removeItem('cornven_user');
+              window.location.reload();
+            }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">

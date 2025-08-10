@@ -25,9 +25,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Handle hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Check for existing session on mount
   useEffect(() => {
+    if (!isHydrated) return;
+    
     const savedUser = localStorage.getItem('cornven_user');
     const token = authService.getAuthToken();
     
@@ -40,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [isHydrated]);
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     setIsLoading(true);
@@ -51,7 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Store user data and token
       setUser(user);
-      localStorage.setItem('cornven_user', JSON.stringify(user));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cornven_user', JSON.stringify(user));
+      }
       authService.setAuthToken(token);
       
       setIsLoading(false);
@@ -64,11 +74,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-
-
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('cornven_user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cornven_user');
+    }
     authService.removeAuthToken();
     setError(null);
   };

@@ -95,17 +95,24 @@ class AuthService {
 
   // Store token in localStorage
   setAuthToken(token: string): void {
-    localStorage.setItem('cornven_token', token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cornven_token', token);
+    }
   }
 
   // Get token from localStorage
   getAuthToken(): string | null {
-    return localStorage.getItem('cornven_token');
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cornven_token');
+    }
+    return null;
   }
 
   // Remove token from localStorage
   removeAuthToken(): void {
-    localStorage.removeItem('cornven_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cornven_token');
+    }
   }
 
   // Check if user is authenticated (has valid token)
