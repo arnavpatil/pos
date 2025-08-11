@@ -1,6 +1,6 @@
-import { LoginCredentials, User } from '@/types/auth';
+import { LoginCredentials, User } from "@/types/auth";
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = "https://cornven-pos-system.vercel.app";
 
 export interface LoginResponse {
   token: string;
@@ -23,10 +23,10 @@ class AuthService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
       ...options,
@@ -34,17 +34,18 @@ class AuthService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
-        let errorMessage = 'An error occurred';
-        
+        let errorMessage = "An error occurred";
+
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
+          errorMessage =
+            errorData.message || errorData.error || `HTTP ${response.status}`;
         } catch {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -53,13 +54,15 @@ class AuthService {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Network error occurred');
+      throw new Error("Network error occurred");
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<{ user: User; token: string }> {
-    const response = await this.makeRequest<LoginResponse>('/auth/login', {
-      method: 'POST',
+  async login(
+    credentials: LoginCredentials
+  ): Promise<{ user: User; token: string }> {
+    const response = await this.makeRequest<LoginResponse>("/auth/login", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
 
@@ -78,40 +81,42 @@ class AuthService {
     };
   }
 
-  private mapApiRoleToUserRole(apiRole: string): 'admin' | 'inventory' | 'pos' | 'tenant' {
+  private mapApiRoleToUserRole(
+    apiRole: string
+  ): "admin" | "inventory" | "pos" | "tenant" {
     switch (apiRole.toUpperCase()) {
-      case 'ADMIN':
-        return 'admin';
-      case 'INVENTORY':
-        return 'inventory';
-      case 'POS':
-        return 'pos';
-      case 'TENANT':
-        return 'tenant';
+      case "ADMIN":
+        return "admin";
+      case "INVENTORY":
+        return "inventory";
+      case "POS":
+        return "pos";
+      case "TENANT":
+        return "tenant";
       default:
-        return 'pos'; // Default fallback
+        return "pos"; // Default fallback
     }
   }
 
   // Store token in localStorage
   setAuthToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('cornven_token', token);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cornven_token", token);
     }
   }
 
   // Get token from localStorage
   getAuthToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('cornven_token');
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("cornven_token");
     }
     return null;
   }
 
   // Remove token from localStorage
   removeAuthToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('cornven_token');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cornven_token");
     }
   }
 

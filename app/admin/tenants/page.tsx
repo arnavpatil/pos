@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import Navigation from '@/components/Navigation';
-import TenantList from '@/components/TenantList';
-import TenantForm from '@/components/TenantForm';
-import LeaseManagement from '@/components/LeaseManagement';
-import RentCollection from '@/components/RentCollection';
-import NotificationManager from '@/components/NotificationManager';
-import { Tenant, TenantFormData, RentPayment } from '@/types/tenant';
-import { getRolePermissions } from '@/data/mockAuth';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import Navigation from "@/components/Navigation";
+import TenantList from "@/components/TenantList";
+import TenantForm from "@/components/TenantForm";
+import LeaseManagement from "@/components/LeaseManagement";
+import RentCollection from "@/components/RentCollection";
+import NotificationManager from "@/components/NotificationManager";
+import { Tenant, TenantFormData, RentPayment } from "@/types/tenant";
+import { getRolePermissions } from "@/data/mockAuth";
 
-type TabType = 'list' | 'lease' | 'rent' | 'notifications';
+type TabType = "list" | "lease" | "rent" | "notifications";
 
 interface ApiTenant {
   id: string;
@@ -56,7 +56,7 @@ export default function TenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>('list');
+  const [activeTab, setActiveTab] = useState<TabType>("list");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,49 +64,54 @@ export default function TenantsPage() {
   // Fetch tenants from API
   const fetchTenants = async () => {
     try {
-      const token = localStorage.getItem('cornven_token');
-      const response = await fetch('/api/admin/tenants-allocations', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const token = localStorage.getItem("cornven_token");
+      console.log(token);
+      const response = await fetch(
+        "https://cornven-pos-system.vercel.app/admin/tenants-allocations",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.ok) {
+        console.log(token);
         const apiTenants: ApiTenant[] = await response.json();
         // Convert API tenants to the format expected by the UI
-        const convertedTenants: Tenant[] = apiTenants.map(apiTenant => {
-          const apiStatus = apiTenant.rentals[0]?.status || 'INACTIVE';
-          let status: 'Upcoming' | 'Active' | 'Expired' = 'Expired';
-          
-          if (apiStatus === 'ACTIVE') {
-            status = 'Active';
-          } else if (apiStatus === 'UPCOMING') {
-            status = 'Upcoming';
+        const convertedTenants: Tenant[] = apiTenants.map((apiTenant) => {
+          const apiStatus = apiTenant.rentals[0]?.status || "INACTIVE";
+          let status: "Upcoming" | "Active" | "Expired" = "Expired";
+
+          if (apiStatus === "ACTIVE") {
+            status = "Active";
+          } else if (apiStatus === "UPCOMING") {
+            status = "Upcoming";
           } else {
-            status = 'Expired';
+            status = "Expired";
           }
-          
+
           return {
             id: apiTenant.id,
             name: apiTenant.user.name,
             email: apiTenant.user.email,
             phone: apiTenant.user.phone,
             businessName: apiTenant.businessName,
-            cubeId: apiTenant.rentals[0]?.cube?.code || '',
-            leaseStartDate: apiTenant.rentals[0]?.startDate || '',
-            leaseEndDate: apiTenant.rentals[0]?.endDate || '',
+            cubeId: apiTenant.rentals[0]?.cube?.code || "",
+            leaseStartDate: apiTenant.rentals[0]?.startDate || "",
+            leaseEndDate: apiTenant.rentals[0]?.endDate || "",
             monthlyRent: apiTenant.rentals[0]?.monthlyRent || 0,
             securityDeposit: 0, // Not in API
             status,
             rentPayments: [], // Not in current API structure
             address: apiTenant.address,
-            notes: apiTenant.notes
+            notes: apiTenant.notes,
           };
         });
         setTenants(convertedTenants);
       }
     } catch (error) {
-      console.error('Error fetching tenants:', error);
+      console.error("Error fetching tenants:", error);
     } finally {
       setLoading(false);
     }
@@ -114,12 +119,12 @@ export default function TenantsPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/auth');
+      router.push("/auth");
       return;
     }
 
-    if (user && !getRolePermissions(user.role).includes('tenants')) {
-      router.push('/');
+    if (user && !getRolePermissions(user.role).includes("tenants")) {
+      router.push("/");
       return;
     }
 
@@ -139,7 +144,11 @@ export default function TenantsPage() {
     );
   }
 
-  if (!isAuthenticated || !user || !getRolePermissions(user.role).includes('tenants')) {
+  if (
+    !isAuthenticated ||
+    !user ||
+    !getRolePermissions(user.role).includes("tenants")
+  ) {
     return null; // Will redirect
   }
 
@@ -155,13 +164,13 @@ export default function TenantsPage() {
   const handleSubmitTenant = async (tenant: Tenant) => {
     if (editingTenant) {
       // Update existing tenant - would need API endpoint for updates
-      setTenants(prev => prev.map(t => t.id === tenant.id ? tenant : t));
+      setTenants((prev) => prev.map((t) => (t.id === tenant.id ? tenant : t)));
     } else {
       // Add new tenant - TenantForm already handles the API call
       // Just add the tenant to the local state and refresh the list
-      setTenants(prev => [...prev, tenant]);
+      setTenants((prev) => [...prev, tenant]);
       setIsFormOpen(false);
-      
+
       // Optionally refresh the tenant list to get the latest data from server
       setTimeout(() => {
         fetchTenants();
@@ -169,115 +178,143 @@ export default function TenantsPage() {
     }
   };
 
-  const handleUpdateLease = (tenantId: string, startDate: string, endDate: string) => {
+  const handleUpdateLease = (
+    tenantId: string,
+    startDate: string,
+    endDate: string
+  ) => {
     // Calculate status based on dates
     const now = new Date();
     const start = new Date(startDate);
     const end = new Date(endDate);
-    let status: 'Upcoming' | 'Active' | 'Expired' = 'Expired';
-    
+    let status: "Upcoming" | "Active" | "Expired" = "Expired";
+
     if (now < start) {
-      status = 'Upcoming';
+      status = "Upcoming";
     } else if (now >= start && now <= end) {
-      status = 'Active';
+      status = "Active";
     } else {
-      status = 'Expired';
+      status = "Expired";
     }
 
-    setTenants(prev => prev.map(tenant => {
-      if (tenant.id === tenantId) {
-        return {
-          ...tenant,
-          leaseStartDate: startDate,
-          leaseEndDate: endDate,
-          status
-        };
-      }
-      return tenant;
-    }));
+    setTenants((prev) =>
+      prev.map((tenant) => {
+        if (tenant.id === tenantId) {
+          return {
+            ...tenant,
+            leaseStartDate: startDate,
+            leaseEndDate: endDate,
+            status,
+          };
+        }
+        return tenant;
+      })
+    );
   };
 
-  const handleAddPayment = (tenantId: string, payment: Omit<RentPayment, 'id' | 'tenantId'>) => {
+  const handleAddPayment = (
+    tenantId: string,
+    payment: Omit<RentPayment, "id" | "tenantId">
+  ) => {
     const newPayment: RentPayment = {
       ...payment,
       id: `payment-${Date.now()}`,
-      tenantId
+      tenantId,
     };
 
-    setTenants(prev => prev.map(tenant => {
-      if (tenant.id === tenantId) {
-        return {
-          ...tenant,
-          rentPayments: [...tenant.rentPayments, newPayment]
-        };
-      }
-      return tenant;
-    }));
+    setTenants((prev) =>
+      prev.map((tenant) => {
+        if (tenant.id === tenantId) {
+          return {
+            ...tenant,
+            rentPayments: [...tenant.rentPayments, newPayment],
+          };
+        }
+        return tenant;
+      })
+    );
   };
 
   const downloadPaymentHistory = (tenantId?: string) => {
     let paymentsToExport: (RentPayment & { tenantName: string })[] = [];
-    
+
     if (tenantId) {
       // Download for specific tenant
-      const tenant = tenants.find(t => t.id === tenantId);
+      const tenant = tenants.find((t) => t.id === tenantId);
       if (tenant) {
-        paymentsToExport = tenant.rentPayments.map(payment => ({
+        paymentsToExport = tenant.rentPayments.map((payment) => ({
           ...payment,
-          tenantName: tenant.name
+          tenantName: tenant.name,
         }));
       }
     } else {
       // Download for all tenants
-      paymentsToExport = tenants.flatMap(tenant =>
-        tenant.rentPayments.map(payment => ({
+      paymentsToExport = tenants.flatMap((tenant) =>
+        tenant.rentPayments.map((payment) => ({
           ...payment,
-          tenantName: tenant.name
+          tenantName: tenant.name,
         }))
       );
     }
 
     // Create CSV content
-    const headers = ['Date', 'Tenant Name', 'Amount', 'Payment Method', 'Payment ID'];
+    const headers = [
+      "Date",
+      "Tenant Name",
+      "Amount",
+      "Payment Method",
+      "Payment ID",
+    ];
     const csvContent = [
-      headers.join(','),
-      ...paymentsToExport.map(payment => [
-        new Date(payment.date).toLocaleDateString(),
-        payment.tenantName,
-        `$${payment.amount}`,
-        payment.method,
-        payment.id
-      ].join(','))
-    ].join('\n');
+      headers.join(","),
+      ...paymentsToExport.map((payment) =>
+        [
+          new Date(payment.date).toLocaleDateString(),
+          payment.tenantName,
+          `$${payment.amount}`,
+          payment.method,
+          payment.id,
+        ].join(",")
+      ),
+    ].join("\n");
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `payment-history-${tenantId || 'all'}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `payment-history-${tenantId || "all"}-${
+        new Date().toISOString().split("T")[0]
+      }.csv`
+    );
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const tabs = [
-    { id: 'list' as TabType, name: 'Tenant List', icon: '👥' },
-    { id: 'lease' as TabType, name: 'Lease Management', icon: '📋' },
-    { id: 'rent' as TabType, name: 'Rent Collection', icon: '💰' },
-    { id: 'notifications' as TabType, name: 'Notifications', icon: '🔔' },
+    { id: "list" as TabType, name: "Tenant List", icon: "👥" },
+    { id: "lease" as TabType, name: "Lease Management", icon: "📋" },
+    { id: "rent" as TabType, name: "Rent Collection", icon: "💰" },
+    { id: "notifications" as TabType, name: "Notifications", icon: "🔔" },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tenant & Rental Management</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage tenants, leases, and rent collection for Cornven cube spaces</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Tenant & Rental Management
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            Manage tenants, leases, and rent collection for Cornven cube spaces
+          </p>
         </div>
 
         {/* Tab Navigation */}
@@ -290,13 +327,13 @@ export default function TenantsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
                     activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? "border-primary-500 text-primary-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
                   <span className="mr-1 sm:mr-2">{tab.icon}</span>
                   <span className="hidden sm:inline">{tab.name}</span>
-                  <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                  <span className="sm:hidden">{tab.name.split(" ")[0]}</span>
                 </button>
               ))}
             </nav>
@@ -305,16 +342,28 @@ export default function TenantsPage() {
 
         {/* Tab Content */}
         <div className="space-y-6">
-          {activeTab === 'list' && (
+          {activeTab === "list" && (
             <>
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
-                <h2 className="text-lg font-semibold text-gray-900">Tenant Management</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Tenant Management
+                </h2>
                 <button
                   onClick={() => downloadPaymentHistory()}
                   className="btn-secondary flex items-center space-x-2"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                   <span>Download All Payment History</span>
                 </button>
@@ -327,21 +376,18 @@ export default function TenantsPage() {
             </>
           )}
 
-          {activeTab === 'lease' && (
+          {activeTab === "lease" && (
             <LeaseManagement
               tenants={tenants}
               onUpdateLease={handleUpdateLease}
             />
           )}
 
-          {activeTab === 'rent' && (
-            <RentCollection
-              tenants={tenants}
-              onAddPayment={handleAddPayment}
-            />
+          {activeTab === "rent" && (
+            <RentCollection tenants={tenants} onAddPayment={handleAddPayment} />
           )}
 
-          {activeTab === 'notifications' && (
+          {activeTab === "notifications" && (
             <NotificationManager tenants={tenants} />
           )}
         </div>
@@ -349,24 +395,26 @@ export default function TenantsPage() {
         {/* Statistics Cards */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-2xl font-bold text-primary-600">{tenants.length}</div>
+            <div className="text-2xl font-bold text-primary-600">
+              {tenants.length}
+            </div>
             <div className="text-sm text-gray-600">Total Tenants</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="text-2xl font-bold text-green-600">
-              {tenants.filter(t => t.status === 'Active').length}
+              {tenants.filter((t) => t.status === "Active").length}
             </div>
             <div className="text-sm text-gray-600">Active Leases</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="text-2xl font-bold text-blue-600">
-              {tenants.filter(t => t.status === 'Upcoming').length}
+              {tenants.filter((t) => t.status === "Upcoming").length}
             </div>
             <div className="text-sm text-gray-600">Upcoming Leases</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="text-2xl font-bold text-red-600">
-              {tenants.filter(t => t.status === 'Expired').length}
+              {tenants.filter((t) => t.status === "Expired").length}
             </div>
             <div className="text-sm text-gray-600">Expired Leases</div>
           </div>
