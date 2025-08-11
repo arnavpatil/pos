@@ -172,27 +172,27 @@ class TenantPortalService {
     }
   }
 
-  async updateProductStock(productId: string, stock: number): Promise<TenantProduct> {
-    const token = localStorage.getItem('token');
+  async updateProductStock(productId: string, price: number, stock: number): Promise<TenantProduct> {
+    const token = authService.getAuthToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`/api/tenant/products/${productId}/stock`, {
+    const response = await fetch(`${API_BASE_URL}/tenant/products/${productId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ stock }),
+      body: JSON.stringify({ price, stock }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to update product stock');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    return await response.json();
   }
 }
 

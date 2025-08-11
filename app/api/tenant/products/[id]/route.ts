@@ -11,25 +11,46 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { stock } = body;
+    const { price, stock } = body;
 
-    if (typeof stock !== 'number' || stock < 0) {
+    // Ensure stock is an integer
+    const stockInt = Math.floor(Number(stock));
+    const priceFloat = Number(price);
+
+    if (isNaN(stockInt) || stockInt < 0) {
       return NextResponse.json({ error: 'Invalid stock value' }, { status: 400 });
     }
 
-    // Proxy to deployed API
-    const response = await fetch(`https://cornven-pos-system.vercel.app/tenant/products/${params.id}/stock`, {
+    if (isNaN(priceFloat) || priceFloat < 0) {
+      return NextResponse.json({ error: 'Invalid price value' }, { status: 400 });
+    }
+
+    console.log('Proxying product update request to deployed API...');
+    console.log('Product ID:', params.id);
+    console.log('Body:', { price: priceFloat, stock: stockInt });
+
+    // Proxy to deployed API - correct endpoint format
+    const requestBody = {
+      price: priceFloat,
+      stock: stockInt
+    };
+
+    console.log('Request body being sent:', requestBody);
+
+    const response = await fetch(`https://cornven-pos-system.vercel.app/tenant/products/${params.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify({ stock }),
+      body: JSON.stringify(requestBody),
     });
 
+    console.log('Deployed API response status:', response.status);
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Deployed API error:', data);
       return NextResponse.json(data, { status: response.status });
     }
 
@@ -41,9 +62,9 @@ export async function PUT(
       },
     });
   } catch (error) {
-    console.error('Stock update error:', error);
+    console.error('Product update error:', error);
     return NextResponse.json(
-      { error: 'Failed to update stock' },
+      { error: 'Failed to update product' },
       { status: 500 }
     );
   }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantPortalService, TenantDetails, TenantProduct, AddProductRequest } from '@/services/tenantPortalService';
+import { authService } from '@/services/authService';
 
 const TenantDashboard = () => {
   const { user, isLoading } = useAuth();
@@ -22,6 +23,10 @@ const TenantDashboard = () => {
     category: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showUpdateStock, setShowUpdateStock] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<TenantProduct | null>(null);
+  const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0 });
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
@@ -94,22 +99,44 @@ const TenantDashboard = () => {
     }
   };
 
-  const handleUpdateStock = async (productId: string, newStock: number) => {
+  const openUpdateStockModal = (product: TenantProduct) => {
+    setSelectedProduct(product);
+    setUpdateStockForm({ price: product.price, stock: product.stock });
+    setShowUpdateStock(true);
+  };
+
+  const handleUpdateStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+
     try {
-      const updatedProduct = await tenantPortalService.updateProductStock(productId, newStock);
+      const updatedProduct = await tenantPortalService.updateProductStock(
+        selectedProduct.id, 
+        updateStockForm.stock, 
+        updateStockForm.price
+      );
+      
       // Update the product in the local state
       setTenantProducts(prev => 
         prev.map(product => 
-          product.id === productId 
-            ? { ...product, stock: updatedProduct.stock }
+          product.id === selectedProduct.id 
+            ? { ...product, stock: updatedProduct.stock, price: updatedProduct.price }
             : product
         )
       );
-      alert('Stock updated successfully!');
+      
+      setShowUpdateStock(false);
+      setSelectedProduct(null);
+      alert('Product updated successfully!');
     } catch (error) {
-      console.error('Error updating stock:', error);
-      alert('Failed to update stock');
+      console.error('Error updating product:', error);
+      alert('Failed to update product');
     }
+  };
+
+  const handleLogout = () => {
+    authService.removeAuthToken();
+    router.push('/auth');
   };
 
   if (isLoading || loading) {
@@ -149,13 +176,63 @@ const TenantDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome, {tenantDetails?.user.name || user.name}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {tenantDetails?.businessName} | Artist Portal
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome, {tenantDetails?.user.name || user.name}
+            </h1>
+            <p className="text-gray-600 mt-2">
+              {tenantDetails?.businessName} | Artist Portal
+            </p>
+          </div>
+          
+          {/* User Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center space-x-3 bg-white rounded-lg shadow px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-medium text-sm">
+                  {(tenantDetails?.user.name || user.name)?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-gray-900">{tenantDetails?.user.name || user.name}</p>
+                <p className="text-xs text-gray-500">{tenantDetails?.user.email || user.email}</p>
+              </div>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="py-1">
+                  <div className="px-4 py-2 border-b border-gray-200 sm:hidden">
+                    <p className="text-sm font-medium text-gray-900">{tenantDetails?.user.name || user.name}</p>
+                    <p className="text-xs text-gray-500">{tenantDetails?.user.email || user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setShowUserMenu(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    View Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Navigation Tabs */}
@@ -387,15 +464,10 @@ const TenantDashboard = () => {
                               {product.status}
                             </span>
                             <button
-                              onClick={() => {
-                                const newStock = prompt('Enter new stock quantity:', product.stock.toString());
-                                if (newStock && !isNaN(Number(newStock))) {
-                                  handleUpdateStock(product.id, Number(newStock));
-                                }
-                              }}
-                              className="text-blue-600 hover:text-blue-800 text-sm"
+                              onClick={() => openUpdateStockModal(product)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                             >
-                              Update Stock
+                              Update
                             </button>
                           </div>
                         </div>
@@ -516,9 +588,11 @@ const TenantDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
                     <input
                       type="number"
+                      step="1"
+                      min="0"
                       required
                       value={productForm.stock}
-                      onChange={(e) => setProductForm({...productForm, stock: Number(e.target.value)})}
+                      onChange={(e) => setProductForm({...productForm, stock: Math.floor(Number(e.target.value))})}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -549,6 +623,67 @@ const TenantDashboard = () => {
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
                     {submitting ? 'Submitting...' : 'Submit for Approval'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Update Stock Modal */}
+        {showUpdateStock && selectedProduct && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Update Product</h3>
+                <p className="text-sm text-gray-600 mt-1">{selectedProduct.name}</p>
+              </div>
+              
+              <form onSubmit={handleUpdateStock} className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={updateStockForm.price}
+                      onChange={(e) => setUpdateStockForm({...updateStockForm, price: Number(e.target.value)})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      required
+                      value={updateStockForm.stock}
+                      onChange={(e) => setUpdateStockForm({...updateStockForm, stock: Math.floor(Number(e.target.value))})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUpdateStock(false);
+                      setSelectedProduct(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {submitting ? 'Updating...' : 'Update Product'}
                   </button>
                 </div>
               </form>
