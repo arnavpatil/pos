@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Tenant, TenantFormData } from '@/types/tenant';
-import { tenantService } from '@/services/tenantService';
-
-interface Cube {
-  id: string;
-  name: string;
-  location: string;
-  size: string;
-}
+import { tenantService, AvailableCube } from '@/services/tenantService';
 
 interface CubeAllocationData {
   tenantId: string;
@@ -45,18 +38,12 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
   const [createdTenantId, setCreatedTenantId] = useState<string>('');
   
   // Cube selection state
+  const [availableCubes, setAvailableCubes] = useState<AvailableCube[]>([]);
   const [selectedCube, setSelectedCube] = useState<string>('');
   const [leaseStartDate, setLeaseStartDate] = useState<string>('');
   const [leaseEndDate, setLeaseEndDate] = useState<string>('');
   const [isAllocatingCube, setIsAllocatingCube] = useState(false);
-
-  // Mock available cubes (4 random options)
-  const availableCubes: Cube[] = [
-    { id: '54d38ae1-38bf-7796-d904-d0ab6d47b691', name: 'Cube A1', location: 'First Floor', size: '10x10 ft' },
-    { id: '54d38ae1-38bf-7796-d904-d0ab6d47b692', name: 'Cube B2', location: 'Second Floor', size: '12x12 ft' },
-    { id: '54d38ae1-38bf-7796-d904-d0ab6d47b693', name: 'Cube C3', location: 'Third Floor', size: '8x8 ft' },
-    { id: '54d38ae1-38bf-7796-d904-d0ab6d47b695', name: 'Cube D4', location: 'Ground Floor', size: '15x15 ft' }
-  ];
+  const [isLoadingCubes, setIsLoadingCubes] = useState(false);
 
   useEffect(() => {
     if (editingTenant) {
@@ -216,8 +203,25 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
     }, 1500);
   };
 
-  const handleProceedToCubeSelection = () => {
+  const loadAvailableCubes = async () => {
+    setIsLoadingCubes(true);
+    try {
+      const cubes = await tenantService.viewAvailableCubes();
+      setAvailableCubes(cubes);
+    } catch (error) {
+      console.error('Error loading available cubes:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to load available cubes. Please try again.'
+      });
+    } finally {
+      setIsLoadingCubes(false);
+    }
+  };
+
+  const handleProceedToCubeSelection = async () => {
     setCurrentStep('cubeSelection');
+    await loadAvailableCubes();
   };
 
   // Helper function to create tenant object for parent component
@@ -337,10 +341,11 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white rounded-lg shadow-xl ${getModalWidth()} w-full mx-4 max-h-[90vh] overflow-hidden`}>
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className={`bg-white rounded-lg shadow-xl ${getModalWidth()} w-full max-h-[90vh] flex flex-col`}>
+        {/* Fixed Header */}
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900">
               {getModalTitle()}
             </h2>
@@ -353,8 +358,10 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
               </svg>
             </button>
           </div>
+        </div>
 
-          <div className="min-h-[400px]">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6">
             {/* Step 1: Tenant Form */}
             {currentStep === 'form' && (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -569,37 +576,57 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Available Cubes (4 random options)
+                    Available Cubes
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {availableCubes.map((cube) => (
-                      <div
-                        key={cube.id}
-                        className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                          selectedCube === cube.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setSelectedCube(cube.id)}
+                  
+                  {isLoadingCubes ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                      <span className="text-gray-600">Loading available cubes...</span>
+                    </div>
+                  ) : availableCubes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600">No available cubes found.</p>
+                      <button
+                        type="button"
+                        onClick={loadAvailableCubes}
+                        className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
                       >
-                        <div className="flex items-start">
-                          <input
-                            type="radio"
-                            name="cube"
-                            value={cube.id}
-                            checked={selectedCube === cube.id}
-                            onChange={() => setSelectedCube(cube.id)}
-                            className="mr-3 mt-1"
-                          />
-                          <div>
-                            <h4 className="font-medium text-gray-900 text-sm">{cube.name}</h4>
-                            <p className="text-xs text-gray-600">{cube.location}</p>
-                            <p className="text-xs text-gray-600">{cube.size}</p>
+                        Retry loading cubes
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                      {availableCubes.map((cube) => (
+                        <div
+                          key={cube.id}
+                          className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                            selectedCube === cube.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => setSelectedCube(cube.id)}
+                        >
+                          <div className="flex items-start">
+                            <input
+                              type="radio"
+                              name="cube"
+                              value={cube.id}
+                              checked={selectedCube === cube.id}
+                              onChange={() => setSelectedCube(cube.id)}
+                              className="mr-3 mt-1"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 text-sm">{cube.code}</h4>
+                              <p className="text-xs text-gray-600">Size: {cube.size}</p>
+                              <p className="text-xs text-gray-600">Price: ${cube.pricePerMonth}/month</p>
+                              <p className="text-xs text-gray-500">Status: {cube.status}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {selectedCube && (
@@ -678,7 +705,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
           </div>
         </div>
       </div>
-    </div>
+   
   );
 };
 

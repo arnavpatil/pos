@@ -11,6 +11,7 @@ import RentCollection from "@/components/RentCollection";
 import NotificationManager from "@/components/NotificationManager";
 import { Tenant, TenantFormData, RentPayment } from "@/types/tenant";
 import { getRolePermissions } from "@/data/mockAuth";
+import { tenantService } from "@/services/tenantService";
 
 type TabType = "list" | "lease" | "rent" | "notifications";
 
@@ -64,52 +65,55 @@ export default function TenantsPage() {
   // Fetch tenants from API
   const fetchTenants = async () => {
     try {
-      const token = localStorage.getItem("cornven_token");
-      console.log(token);
-      const response = await fetch(
-        "https://cornven-pos-system.vercel.app/admin/tenants-allocations",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        console.log(token);
-        const apiTenants: ApiTenant[] = await response.json();
-        // Convert API tenants to the format expected by the UI
-        const convertedTenants: Tenant[] = apiTenants.map((apiTenant) => {
-          const apiStatus = apiTenant.rentals[0]?.status || "INACTIVE";
-          let status: "Upcoming" | "Active" | "Expired" = "Expired";
-
-          if (apiStatus === "ACTIVE") {
+      console.log("Fetching tenants using tenantService...");
+      
+      const apiTenants: ApiTenant[] = await tenantService.viewAllTenants();
+      console.log("API Response:", apiTenants);
+      
+      // Convert API tenants to the format expected by the UI
+      const convertedTenants: Tenant[] = apiTenants.map((apiTenant) => {
+        // Handle multiple rentals - get the most recent active one or the first one
+        const activeRental = apiTenant.rentals.find(rental => rental.status === "ACTIVE") || apiTenant.rentals[0];
+        
+        let status: "Upcoming" | "Active" | "Expired" = "Expired";
+        
+        if (activeRental) {
+          const now = new Date();
+          const startDate = new Date(activeRental.startDate);
+          const endDate = new Date(activeRental.endDate);
+          
+          if (activeRental.status === "ACTIVE" && now >= startDate && now <= endDate) {
             status = "Active";
-          } else if (apiStatus === "UPCOMING") {
+          } else if (now < startDate) {
             status = "Upcoming";
           } else {
             status = "Expired";
           }
+        }
 
-          return {
-            id: apiTenant.id,
-            name: apiTenant.user.name,
-            email: apiTenant.user.email,
-            phone: apiTenant.user.phone,
-            businessName: apiTenant.businessName,
-            cubeId: apiTenant.rentals[0]?.cube?.code || "",
-            leaseStartDate: apiTenant.rentals[0]?.startDate || "",
-            leaseEndDate: apiTenant.rentals[0]?.endDate || "",
-            monthlyRent: apiTenant.rentals[0]?.monthlyRent || 0,
-            securityDeposit: 0, // Not in API
-            status,
-            rentPayments: [], // Not in current API structure
-            address: apiTenant.address,
-            notes: apiTenant.notes,
-          };
-        });
-        setTenants(convertedTenants);
-      }
+        const convertedTenant = {
+          id: apiTenant.id,
+          name: apiTenant.user.name,
+          email: apiTenant.user.email,
+          phone: apiTenant.user.phone,
+          businessName: apiTenant.businessName,
+          cubeId: activeRental?.cube?.code || "No Cube",
+          leaseStartDate: activeRental?.startDate || "",
+          leaseEndDate: activeRental?.endDate || "",
+          monthlyRent: activeRental?.monthlyRent || 0,
+          securityDeposit: 0, // Not in API
+          status,
+          rentPayments: [], // Not in current API structure
+          address: apiTenant.address,
+          notes: apiTenant.notes || "",
+        };
+        
+        console.log("Converted tenant:", convertedTenant);
+        return convertedTenant;
+      });
+      
+      console.log("All converted tenants:", convertedTenants);
+      setTenants(convertedTenants);
     } catch (error) {
       console.error("Error fetching tenants:", error);
     } finally {

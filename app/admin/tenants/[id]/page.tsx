@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import { getRolePermissions } from '@/data/mockAuth';
 import { authService } from '@/services/authService';
+import { tenantService } from '@/services/tenantService';
 
 // Define the tenant interface based on the new API structure
 interface ApiTenant {
@@ -69,17 +70,7 @@ export default function TenantDetailsPage() {
     const fetchTenant = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/admin/tenants-allocations', {
-          headers: {
-            'Authorization': `Bearer ${authService.getAuthToken()}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch tenants');
-        }
-
-        const tenants: ApiTenant[] = await response.json();
+        const tenants: ApiTenant[] = await tenantService.viewAllTenants();
         const tenantId = params.id as string;
         const foundTenant = tenants.find(t => t.id === tenantId);
         

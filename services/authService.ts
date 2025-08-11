@@ -1,6 +1,8 @@
 import { LoginCredentials, User } from "@/types/auth";
 
-const API_BASE_URL = "https://cornven-pos-system.vercel.app";
+const API_BASE_URL = typeof window !== 'undefined' 
+  ? `${window.location.origin}/api` 
+  : 'http://localhost:3001/api';
 
 export interface LoginResponse {
   token: string;
@@ -18,50 +20,27 @@ export interface ApiError {
 }
 
 class AuthService {
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-
-    const config: RequestInit = {
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         ...options.headers,
       },
-      ...options,
-    };
+    });
 
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        let errorMessage = "An error occurred";
-
-        try {
-          const errorData = await response.json();
-          errorMessage =
-            errorData.message || errorData.error || `HTTP ${response.status}`;
-        } catch {
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Network error occurred");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
+
+    return await response.json();
   }
 
   async login(
     credentials: LoginCredentials
   ): Promise<{ user: User; token: string }> {
-    const response = await this.makeRequest<LoginResponse>("/auth/login", {
+    const response = await this.makeRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });

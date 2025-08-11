@@ -1,50 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser } from '@/data/mockAuth';
-import { v4 as uuidv4 } from 'uuid';
+
+const DEPLOYED_API_URL = 'https://cornven-pos-system.vercel.app';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
-    }
-
-    // Use local mock authentication
-    const user = await authenticateUser(email, password);
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
-
-    // Generate a mock JWT token
-    const token = uuidv4();
-
-    // Return user data and token in the expected format
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        tenantId: user.tenantId,
-        artistId: user.artistId,
-        createdAt: user.createdAt
+    
+    console.log('Proxying login request to deployed API...');
+    
+    // Proxy the request to the deployed API
+    const response = await fetch(`${DEPLOYED_API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      token
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+    
+    console.log('Deployed API response status:', response.status);
+    
+    if (!response.ok) {
+      return NextResponse.json(
+        data,
+        { 
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    // Return the response from the deployed API with CORS headers
+    return NextResponse.json(data, {
+      status: response.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Proxy login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Failed to connect to authentication server' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }
@@ -56,7 +67,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
 }

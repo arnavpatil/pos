@@ -1,6 +1,8 @@
 import { authService } from "./authService";
 
-const API_BASE_URL = "https://cornven-pos-system.vercel.app";
+const API_BASE_URL = typeof window !== 'undefined' 
+  ? `${window.location.origin}/api` 
+  : 'http://localhost:3001/api';
 
 export interface AddTenantRequest {
   name: string;
@@ -83,48 +85,32 @@ export interface CubeAllocationResponse {
   data?: any;
 }
 
+export interface AvailableCube {
+  id: string;
+  code: string;
+  size: string;
+  pricePerMonth: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class TenantService {
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const token = authService.getAuthToken();
-
-    if (!token) {
-      throw new Error("Authentication token not found. Please login again.");
-    }
-
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
         ...options.headers,
       },
     });
 
     if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch {
-        // If response is not JSON, use the text content
-        try {
-          const errorText = await response.text();
-          if (errorText) {
-            errorMessage = errorText;
-          }
-        } catch {
-          // Keep the default error message
-        }
-      }
-
-      throw new Error(errorMessage);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    return await response.json();
   }
 
   async addTenant(tenantData: AddTenantRequest): Promise<{
@@ -133,10 +119,18 @@ class TenantService {
     message?: string;
   }> {
     try {
-      const response = await this.makeRequest<AddTenantResponse>(
+      const token = authService.getAuthToken();
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      const response = await this.makeRequest(
         "/admin/add-tenant",
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(tenantData),
         }
       );
@@ -164,18 +158,53 @@ class TenantService {
   }
 
   async viewAllTenants(): Promise<ViewTenantsResponse[]> {
-    return this.makeRequest<ViewTenantsResponse[]>(
+    const token = authService.getAuthToken();
+    if (!token) {
+      throw new Error("Authentication token not found. Please login again.");
+    }
+
+    return this.makeRequest(
       "/admin/tenants-allocations",
       {
         method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
+  }
+
+  async viewAvailableCubes(): Promise<AvailableCube[]> {
+    try {
+      const token = authService.getAuthToken();
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      return await this.makeRequest(
+        "/admin/cubes",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching available cubes:", error);
+      throw error;
+    }
   }
 
   async allocateCube(
     allocationData: CubeAllocationRequest
   ): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
+      const token = authService.getAuthToken();
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
       // Format dates to ISO string
       const formattedData = {
         ...allocationData,
@@ -183,10 +212,13 @@ class TenantService {
         endDate: new Date(allocationData.endDate).toISOString(),
       };
 
-      const response = await this.makeRequest<CubeAllocationResponse>(
+      const response = await this.makeRequest(
         "/admin/tenant-cube-allocation",
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(formattedData),
         }
       );
@@ -244,19 +276,19 @@ class TenantService {
     // Remove any non-digit characters
     const cleaned = phone.replace(/\D/g, "");
 
-    // If it starts with 61, it's already in international format
-    if (cleaned.startsWith("61")) {
-      return `+${cleaned}`;
+    // If it starts with 61 (international format), convert to Australian format
+    if (cleaned.startsWith("61") && cleaned.length === 11) {
+      return `0${cleaned.substring(2)}`;
     }
 
-    // If it starts with 0, replace with +61
-    if (cleaned.startsWith("0")) {
-      return `+61${cleaned.substring(1)}`;
+    // If it starts with 0, keep Australian format
+    if (cleaned.startsWith("0") && cleaned.length === 10) {
+      return cleaned;
     }
 
-    // If it's just the number without country code, add +61
+    // If it's 9 digits, add leading 0 for Australian format
     if (cleaned.length === 9) {
-      return `+61${cleaned}`;
+      return `0${cleaned}`;
     }
 
     // Return as is if we can't determine the format

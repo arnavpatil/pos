@@ -1,106 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { addTenant } from '../../../../data/mockTenants';
+
+const DEPLOYED_API_URL = 'https://cornven-pos-system.vercel.app';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const authHeader = request.headers.get('authorization');
     
-    // Debug: Log the received request body
-    console.log('Received request body:', JSON.stringify(body, null, 2));
+    console.log('Proxying add-tenant request to deployed API...');
     
     if (!authHeader) {
       return NextResponse.json(
         { error: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
 
-    // Validate required fields
-    const { name, email, password, phone, businessName, address, notes } = body;
+    // Proxy the request to the deployed API
+    const response = await fetch(`${DEPLOYED_API_URL}/admin/add-tenant`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
     
-    // Debug: Log individual fields
-    console.log('Extracted fields:', {
-      name: `"${name}"`,
-      email: `"${email}"`,
-      password: `"${password}"`,
-      phone: `"${phone}"`,
-      businessName: `"${businessName}"`,
-      address: `"${address}"`,
-      notes: `"${notes}"`
+    console.log('Deployed API response status:', response.status);
+    
+    if (!response.ok) {
+      return NextResponse.json(
+        data,
+        { 
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    // Return the response from the deployed API with CORS headers
+    return NextResponse.json(data, {
+      status: response.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
     });
     
-    const missingFields = [];
-    if (!name || !name.trim()) missingFields.push('name');
-    if (!email || !email.trim()) missingFields.push('email');
-    if (!password || !password.trim()) missingFields.push('password');
-    if (!phone || !phone.trim()) missingFields.push('phone');
-    if (!businessName || !businessName.trim()) missingFields.push('businessName');
-    if (!address || !address.trim()) missingFields.push('address');
-    
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Generate IDs
-    const userId = uuidv4();
-    const tenantId = uuidv4();
-    const currentTime = new Date().toISOString();
-
-    // Create response matching the external API structure
-    const response = {
-      id: userId,
-      name,
-      email,
-      password: `$2b$10$n9.J90mBhsehXqCEc9UkXuCUs0.B43a4vMrOGVw.8I9sTx5cj1vFa`, // Mock hashed password
-      role: "TENANT",
-      phone,
-      createdAt: currentTime,
-      updatedAt: currentTime,
-      tenants: [
-        {
-          id: tenantId,
-          userId,
-          businessName,
-          address,
-          notes: notes || "",
-          createdAt: currentTime,
-          updatedAt: currentTime
-        }
-      ]
-    };
-
-    // Store the tenant for later retrieval
-    const tenantForStorage = {
-      id: tenantId,
-      userId,
-      businessName,
-      address,
-      notes: notes || "",
-      createdAt: currentTime,
-      updatedAt: currentTime,
-      user: {
-        id: userId,
-        name,
-        email,
-        phone
-      },
-      rentals: []
-    };
-
-    addTenant(tenantForStorage);
-
-    return NextResponse.json(response, { status: 200 });
-    
   } catch (error) {
-    console.error('Add Tenant API Error:', error);
+    console.error('Proxy add-tenant error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Failed to connect to server' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }

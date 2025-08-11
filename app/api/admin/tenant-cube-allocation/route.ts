@@ -1,69 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { mockCubes } from '../../../../data/mockCubes';
 
-// Mock storage for allocations
-let storedAllocations: any[] = [];
+const DEPLOYED_API_URL = 'https://cornven-pos-system.vercel.app';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const authHeader = request.headers.get('authorization');
     
+    console.log('Proxying tenant-cube-allocation POST request to deployed API...');
+    
     if (!authHeader) {
       return NextResponse.json(
         { error: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
 
-    // Validate required fields
-    const { tenantId, cubeId, startDate, endDate } = body;
+    // Proxy the request to the deployed API
+    const response = await fetch(`${DEPLOYED_API_URL}/admin/tenant-cube-allocation`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
     
-    if (!tenantId || !cubeId || !startDate || !endDate) {
+    console.log('Deployed API response status:', response.status);
+    
+    if (!response.ok) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        data,
+        { 
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
 
-    // Find the cube to get monthly rent
-    const cube = mockCubes.find(c => c.id === cubeId);
-    if (!cube) {
-      return NextResponse.json(
-        { error: 'Cube not found' },
-        { status: 404 }
-      );
-    }
-
-    // Generate allocation data
-    const allocationId = uuidv4();
-    const currentTime = new Date().toISOString();
-    const allocatedById = "b28b878a-7f65-4ef2-8367-a907d38a6db9"; // Mock admin ID
-
-    const allocation = {
-      id: allocationId,
-      tenantId,
-      cubeId,
-      startDate,
-      endDate,
-      status: "ACTIVE",
-      monthlyRent: cube.pricePerMonth,
-      lastPayment: null,
-      createdAt: currentTime,
-      updatedAt: currentTime,
-      allocatedById
-    };
-
-    storedAllocations.push(allocation);
-
-    return NextResponse.json(allocation, { status: 200 });
+    // Return the response from the deployed API with CORS headers
+    return NextResponse.json(data, {
+      status: response.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    });
     
   } catch (error) {
-    console.error('Tenant Cube Allocation API Error:', error);
+    console.error('Proxy tenant-cube-allocation POST error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Failed to connect to server' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }
@@ -72,20 +81,71 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
     
+    console.log('Proxying tenant-cube-allocation GET request to deployed API...');
+    
     if (!authHeader) {
       return NextResponse.json(
         { error: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
 
-    return NextResponse.json(storedAllocations, { status: 200 });
+    // Proxy the request to the deployed API
+    const response = await fetch(`${DEPLOYED_API_URL}/admin/tenant-cube-allocation`, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    
+    console.log('Deployed API response status:', response.status);
+    
+    if (!response.ok) {
+      return NextResponse.json(
+        data,
+        { 
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    // Return the response from the deployed API with CORS headers
+    return NextResponse.json(data, {
+      status: response.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    });
     
   } catch (error) {
-    console.error('Tenant Cube Allocation API Error:', error);
+    console.error('Proxy tenant-cube-allocation GET error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Failed to connect to server' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }
@@ -95,7 +155,7 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
