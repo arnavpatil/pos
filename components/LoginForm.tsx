@@ -30,7 +30,7 @@ const LoginForm = () => {
   // Demo credentials for easy testing
   const demoCredentials = [
     { email: 'admin@cornven.com', password: 'Admin@1234', role: 'Administrator' },
-    { email: 'tenant@cornven.com', password: 'Tenant@123', role: 'Tenant' },
+    { email: 'tenant@cornven.com', password: 'Tenant@1234', role: 'Tenant' },
   ];
 
   const fillDemoCredentials = (email: string, password: string) => {

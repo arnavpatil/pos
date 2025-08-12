@@ -10,14 +10,29 @@ import { mockPaymentRecords } from '@/data/mockSales';
 import { DashboardStats } from '@/types/sales';
 import { Product } from '@/types/product';
 import { PaymentRecord } from '@/types/sales';
+import { adminProductService, AdminProduct } from '@/services/adminProductService';
+
+type AdminTabType = 'dashboard' | 'logs';
 
 const AdminDashboard = () => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<AdminTabType>('dashboard');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [recentPayments, setRecentPayments] = useState<PaymentRecord[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
+
+  const loadAdminProducts = async () => {
+    try {
+      const products = await adminProductService.getProducts();
+      setAdminProducts(products);
+    } catch (error) {
+      console.error('Error loading admin products:', error);
+      setAdminProducts([]);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -41,6 +56,9 @@ const AdminDashboard = () => {
         .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
         .slice(0, 10);
       setRecentPayments(sortedPayments);
+      
+      // Load admin products for logs
+      loadAdminProducts();
     }
   }, [user, isLoading, router]);
 
@@ -99,8 +117,39 @@ const AdminDashboard = () => {
           <p className="text-gray-600 mt-2 text-sm sm:text-base">Overview of store performance and management tools</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'dashboard'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📊 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('logs')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'logs'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📋 Product Logs
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'dashboard' && (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -289,6 +338,113 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+          </>
+        )}
+
+        {/* Logs Tab */}
+        {activeTab === 'logs' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Product Change Logs</h2>
+              <p className="text-gray-600 mt-1">Track all product changes and modifications</p>
+            </div>
+            <div className="p-6">
+              {adminProducts.length > 0 && adminProducts.some(product => product.logs.length > 0) ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tenant
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Change Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Previous Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          New Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Changed By
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date & Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {adminProducts.flatMap(product => 
+                        product.logs.map(log => (
+                          <tr key={log.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                <div className="text-sm text-gray-500">{product.sku}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{product.tenant.businessName}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                log.changeType === 'SUBMISSION' ? 'bg-blue-100 text-blue-800' :
+                                log.changeType === 'PRICE_UPDATE' ? 'bg-yellow-100 text-yellow-800' :
+                                log.changeType === 'STOCK_UPDATE' ? 'bg-green-100 text-green-800' :
+                                log.changeType === 'STATUS_CHANGE' ? 'bg-purple-100 text-purple-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {log.changeType.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {log.changeType === 'SUBMISSION' ? 'N/A' :
+                               log.changeType === 'PRICE_UPDATE' ? `$${log.previousValue}` :
+                               log.changeType === 'STOCK_UPDATE' ? `${log.previousValue} units` :
+                               log.previousValue || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {log.changeType === 'SUBMISSION' ? (
+                                (() => {
+                                  try {
+                                    const parsed = JSON.parse(log.newValue);
+                                    return `Price: $${parsed.price}, Stock: ${parsed.stock}`;
+                                  } catch {
+                                    return log.newValue;
+                                  }
+                                })()
+                              ) : log.changeType === 'PRICE_UPDATE' ? `$${log.newValue}` :
+                                log.changeType === 'STOCK_UPDATE' ? `${log.newValue} units` :
+                                log.newValue}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {log.user.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No product logs available</h3>
+                  <p className="mt-1 text-sm text-gray-500">Product change logs will appear here when products are modified.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

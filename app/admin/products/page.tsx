@@ -10,9 +10,12 @@ import { Product, Category } from '@/types/product';
 import { adminProductService, AdminProduct } from '@/services/adminProductService';
 import { Search, Filter, Upload, Download, Edit, Trash2, Eye, Package, AlertTriangle, TrendingUp, DollarSign, Users, RefreshCw, Check, X } from 'lucide-react';
 
+type AdminProductTabType = 'products' | 'approvals' | 'logs';
+
 const AdminProducts = () => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<AdminProductTabType>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -23,7 +26,6 @@ const AdminProducts = () => {
   const [showBatchUpload, setShowBatchUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
-  const [showApprovals, setShowApprovals] = useState(false);
   const [loading, setLoading] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState<string | null>(null);
 
@@ -435,28 +437,40 @@ const AdminProducts = () => {
         {/* Filters and Actions */}
         <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex flex-col space-y-4">
-            {/* View Toggle */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowApprovals(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  !showApprovals 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Product Management
-              </button>
-              <button
-                onClick={() => setShowApprovals(true)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  showApprovals 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Product Approvals
-              </button>
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'products'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Products
+                </button>
+                <button
+                  onClick={() => setActiveTab('approvals')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'approvals'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Approvals
+                </button>
+                <button
+                  onClick={() => setActiveTab('logs')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'logs'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Product Logs
+                </button>
+              </nav>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -470,13 +484,13 @@ const AdminProducts = () => {
                   <option value="all">All Categories</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.name}>
-                      {category.name} ({showApprovals ? filteredAdminProducts.filter(p => p.category === category.name).length : products.filter(p => p.category === category.name).length})
+                      {category.name} ({activeTab === 'approvals' ? filteredAdminProducts.filter(p => p.category === category.name).length : products.filter(p => p.category === category.name).length})
                     </option>
                   ))}
                 </select>
               </div>
               
-              {showApprovals && (
+              {activeTab === 'approvals' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Tenant</label>
                   <input
@@ -493,7 +507,7 @@ const AdminProducts = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
                 <input
                   type="text"
-                  placeholder={showApprovals ? "Search by name, SKU, or tenant..." : "Search by name, barcode, or artist..."}
+                  placeholder={activeTab === 'approvals' ? "Search by name, SKU, or tenant..." : "Search by name, barcode, or artist..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -501,7 +515,7 @@ const AdminProducts = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              {!showApprovals ? (
+              {activeTab === 'products' ? (
                 <>
                   <button
                     onClick={() => setShowBatchUpload(true)}
@@ -522,7 +536,7 @@ const AdminProducts = () => {
                     Export Excel
                   </button>
                 </>
-              ) : (
+              ) : activeTab === 'approvals' ? (
                 <button
                   onClick={() => loadAdminProducts()}
                   disabled={loading}
@@ -537,7 +551,7 @@ const AdminProducts = () => {
                   )}
                   Refresh Approvals
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -546,11 +560,11 @@ const AdminProducts = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              {showApprovals ? 'Product Approvals' : 'Products'} ({showApprovals ? filteredAdminProducts.length : filteredProducts.length} items)
+              {activeTab === 'approvals' ? 'Product Approvals' : activeTab === 'logs' ? 'Product Logs' : 'Products'} ({activeTab === 'approvals' ? filteredAdminProducts.length : filteredProducts.length} items)
             </h3>
           </div>
           
-          {showApprovals ? (
+          {activeTab === 'approvals' ? (
             /* Admin Products Approval Table */
             filteredAdminProducts.length > 0 ? (
               <>
@@ -696,6 +710,132 @@ const AdminProducts = () => {
                 </p>
               </div>
             )
+          ) : activeTab === 'logs' ? (
+            /* Product Logs Table */
+            adminProducts.length > 0 ? (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tenant
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Change Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Previous Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          New Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Changed By
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date & Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {adminProducts.flatMap(product => 
+                        product.logs?.map((log, index) => (
+                          <tr key={`${product.id}-${index}`} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {product.tenant.businessName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                log.changeType === 'SUBMISSION' ? 'bg-blue-100 text-blue-800' :
+                                log.changeType === 'PRICE_UPDATE' ? 'bg-yellow-100 text-yellow-800' :
+                                log.changeType === 'STOCK_UPDATE' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {log.changeType.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {log.previousValue || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {log.newValue || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                               {log.user?.name || 'System'}
+                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        )) || []
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile/Tablet Cards for Product Logs */}
+                <div className="lg:hidden">
+                  {adminProducts.flatMap(product => 
+                    product.logs?.map((log, index) => (
+                      <div key={`${product.id}-${index}`} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">{product.name}</h4>
+                            <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                            <p className="text-xs text-gray-500">{product.tenant.businessName}</p>
+                          </div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            log.changeType === 'SUBMISSION' ? 'bg-blue-100 text-blue-800' :
+                            log.changeType === 'PRICE_UPDATE' ? 'bg-yellow-100 text-yellow-800' :
+                            log.changeType === 'STOCK_UPDATE' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {log.changeType.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-gray-500">Previous Value</p>
+                            <p className="text-gray-900">{log.previousValue || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">New Value</p>
+                            <p className="text-gray-900">{log.newValue || 'N/A'}</p>
+                          </div>
+                          <div>
+                             <p className="text-gray-500">Changed By</p>
+                             <p className="text-gray-900">{log.user?.name || 'System'}</p>
+                           </div>
+                          <div>
+                            <p className="text-gray-500">Date & Time</p>
+                            <p className="text-gray-900">{new Date(log.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )) || []
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="p-12 text-center">
+                <Package className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No product logs found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Product change logs will appear here when products are modified.
+                </p>
+              </div>
+            )
           ) : (
             /* Regular Products Table */
             filteredProducts.length > 0 ? (
@@ -722,9 +862,6 @@ const AdminProducts = () => {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -758,14 +895,6 @@ const AdminProducts = () => {
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)}`}>
                               {product.status}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button className="text-blue-600 hover:text-blue-900 mr-3">
-                              Edit
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              Delete
-                            </button>
                           </td>
                         </tr>
                       );
@@ -812,15 +941,6 @@ const AdminProducts = () => {
                           <p className="text-xs text-gray-500">Tenant</p>
                           <p className="text-sm text-gray-900 truncate">{product.tenantName}</p>
                         </div>
-                      </div>
-                      
-                      <div className="flex space-x-3">
-                        <button className="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                          Edit
-                        </button>
-                        <button className="text-red-600 hover:text-red-900 text-sm font-medium">
-                          Delete
-                        </button>
                       </div>
                     </div>
                   );
