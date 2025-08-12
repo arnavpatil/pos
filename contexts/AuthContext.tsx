@@ -85,6 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     authService.removeAuthToken();
     setError(null);
+    // Redirect to auth page after logout
+    if (typeof window !== "undefined") {
+      window.location.href = '/auth';
+    }
   };
 
   const clearError = () => {

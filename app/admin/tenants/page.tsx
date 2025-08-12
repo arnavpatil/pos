@@ -75,7 +75,7 @@ export default function TenantsPage() {
         // Handle multiple rentals - get the most recent active one or the first one
         const activeRental = apiTenant.rentals.find(rental => rental.status === "ACTIVE") || apiTenant.rentals[0];
         
-        let status: "Upcoming" | "Active" | "Expired" = "Expired";
+        let status: "Upcoming" | "Active" | "Expired" | "Available" = "Expired";
         
         if (activeRental) {
           const now = new Date();
@@ -89,6 +89,9 @@ export default function TenantsPage() {
           } else {
             status = "Expired";
           }
+        } else {
+          // If no active rental, set status to Available
+          status = "Available";
         }
 
         const convertedTenant = {
@@ -97,7 +100,7 @@ export default function TenantsPage() {
           email: apiTenant.user.email,
           phone: apiTenant.user.phone,
           businessName: apiTenant.businessName,
-          cubeId: activeRental?.cube?.code || "No Cube",
+          cubeId: activeRental?.cube?.code || "-",
           leaseStartDate: activeRental?.startDate || "",
           leaseEndDate: activeRental?.endDate || "",
           monthlyRent: activeRental?.monthlyRent || 0,

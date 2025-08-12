@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantPortalService, TenantDetails, TenantProduct, AddProductRequest } from '@/services/tenantPortalService';
 import { authService } from '@/services/authService';
+import Snackbar from '@/components/Snackbar';
 
 const TenantDashboard = () => {
   const { user, isLoading } = useAuth();
@@ -13,7 +14,7 @@ const TenantDashboard = () => {
   const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'logs' | 'profile'>('dashboard');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState<AddProductRequest>({
     name: '',
@@ -27,6 +28,12 @@ const TenantDashboard = () => {
   const [selectedProduct, setSelectedProduct] = useState<TenantProduct | null>(null);
   const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0 });
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isUpdatingStock, setIsUpdatingStock] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    isVisible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  }>({ isVisible: false, message: '', type: 'success' });
 
   useEffect(() => {
     if (!isLoading) {
@@ -109,6 +116,7 @@ const TenantDashboard = () => {
     e.preventDefault();
     if (!selectedProduct) return;
 
+    setIsUpdatingStock(true);
     try {
       const updatedProduct = await tenantPortalService.updateProductStock(
         selectedProduct.id, 
@@ -127,16 +135,38 @@ const TenantDashboard = () => {
       
       setShowUpdateStock(false);
       setSelectedProduct(null);
-      alert('Product updated successfully!');
+      
+      // Show success snackbar
+      setSnackbar({
+        isVisible: true,
+        message: 'Product updated successfully!',
+        type: 'success'
+      });
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Failed to update product');
+      
+      // Show error snackbar
+      setSnackbar({
+        isVisible: true,
+        message: 'Failed to update product. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setIsUpdatingStock(false);
     }
   };
 
+  const closeSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, isVisible: false }));
+  };
+
   const handleLogout = () => {
-    authService.removeAuthToken();
-    router.push('/auth');
+    // Use AuthContext logout method for proper state management
+    if (user) {
+      authService.removeAuthToken();
+      // Force page reload to clear all state and redirect to auth
+      window.location.href = '/auth';
+    }
   };
 
   if (isLoading || loading) {
@@ -259,6 +289,16 @@ const TenantDashboard = () => {
               Products
             </button>
             <button
+              onClick={() => setActiveTab('logs')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'logs'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Logs
+            </button>
+            <button
               onClick={() => setActiveTab('profile')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'profile'
@@ -317,7 +357,10 @@ const TenantDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
+              <div 
+                className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setActiveTab('products')}
+              >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -680,16 +723,30 @@ const TenantDashboard = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    disabled={isUpdatingStock}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
                   >
-                    {submitting ? 'Updating...' : 'Update Product'}
+                    {isUpdatingStock && (
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isUpdatingStock ? 'Updating...' : 'Update Product'}</span>
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
+
+        {/* Snackbar */}
+        <Snackbar
+          message={snackbar.message}
+          type={snackbar.type}
+          isVisible={snackbar.isVisible}
+          onClose={closeSnackbar}
+        />
       </div>
     </div>
   );

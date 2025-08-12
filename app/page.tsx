@@ -98,41 +98,32 @@ export default function Home() {
       ),
       color: 'primary'
     },
-    {
-      name: 'My Products',
-      href: '/tenant/products',
-      permission: 'tenant-products',
-      description: 'Manage your product inventory and listings',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      ),
-      color: 'secondary'
-    },
+
     {
       name: 'My Sales',
       href: '/tenant/sales',
       permission: 'tenant-sales',
-      description: 'Track your sales and transaction history',
+      description: 'Coming Soon - Track your sales and transaction history',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2-2z" />
         </svg>
       ),
-      color: 'accent'
+      color: 'accent',
+      comingSoon: true
     },
     {
       name: 'Payments',
       href: '/tenant/payments',
       permission: 'tenant-payments',
-      description: 'View rent payments and commission earnings',
+      description: 'Coming Soon - View rent payments and commission earnings',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
         </svg>
       ),
-      color: 'success'
+      color: 'success',
+      comingSoon: true
     }
   ];
 
@@ -178,18 +169,33 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Your Modules</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
               {accessibleModules.map((module) => (
-                <Link key={module.name} href={module.href} className="group">
-                  <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                    <div className={`w-16 h-16 bg-${module.color}-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-${module.color}-200 transition-colors text-${module.color}-600`}>
-                      {module.icon}
+                module.comingSoon ? (
+                  <div key={module.name} className="group cursor-not-allowed">
+                    <div className="bg-white rounded-xl shadow-lg p-8 opacity-75">
+                      <div className={`w-16 h-16 bg-${module.color}-100 rounded-lg flex items-center justify-center mb-6 text-${module.color}-600`}>
+                        {module.icon}
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3">{module.name}</h3>
+                      <p className="text-gray-600 mb-4">{module.description}</p>
+                      <span className="text-orange-600 font-medium">
+                        Coming Soon
+                      </span>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{module.name}</h3>
-                    <p className="text-gray-600 mb-4">{module.description}</p>
-                    <span className={`text-${module.color}-600 font-medium group-hover:text-${module.color}-700`}>
-                      Access Module →
-                    </span>
                   </div>
-                </Link>
+                ) : (
+                  <Link key={module.name} href={module.href} className="group">
+                    <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                      <div className={`w-16 h-16 bg-${module.color}-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-${module.color}-200 transition-colors text-${module.color}-600`}>
+                        {module.icon}
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3">{module.name}</h3>
+                      <p className="text-gray-600 mb-4">{module.description}</p>
+                      <span className={`text-${module.color}-600 font-medium group-hover:text-${module.color}-700`}>
+                        Access Module →
+                      </span>
+                    </div>
+                  </Link>
+                )
               ))}
             </div>
           </div>

@@ -57,7 +57,7 @@ export default function TenantList({ tenants: propTenants, onViewTenant, onAddNe
   };
 
   return (
-    <div className="card">
+    <div className="card max-h-[600px] overflow-y-auto">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h2 className="text-lg font-semibold text-gray-900">Tenant List</h2>
         <div className="flex flex-col sm:flex-row gap-3">

@@ -30,13 +30,7 @@ const LoginForm = () => {
   // Demo credentials for easy testing
   const demoCredentials = [
     { email: 'admin@cornven.com', password: 'Admin@1234', role: 'Administrator' },
-    { email: 'inventory@cornven.com', password: 'Inventory@123', role: 'Inventory Manager' },
-    { email: 'pos@cornven.com', password: 'POS@123', role: 'POS Operator' },
-    { email: 'sarah@artcorner.com', password: 'Tenant@123', role: 'Tenant - Sarah Johnson' },
-    { email: 'luna@jewelry.com', password: 'Tenant@123', role: 'Tenant - Luna Martinez' },
-    { email: 'otaku@crafts.com', password: 'Tenant@123', role: 'Tenant - Alex Chen' },
-    { email: 'pixel@dreams.com', password: 'Tenant@123', role: 'Tenant - Maya Patel' },
-    { email: 'paper@ink.com', password: 'Tenant@123', role: 'Tenant - David Kim' },
+    { email: 'tenant@cornven.com', password: 'Tenant@123', role: 'Tenant' },
   ];
 
   const fillDemoCredentials = (email: string, password: string) => {

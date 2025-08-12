@@ -607,32 +607,18 @@ const AdminProducts = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {product.status === 'PENDING' ? (
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleApproval(product.id, true)}
-                                  disabled={approvalLoading === product.id}
-                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                                >
-                                  {approvalLoading === product.id ? (
-                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                                  ) : (
-                                    <Check className="w-3 h-3 mr-1" />
-                                  )}
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => handleApproval(product.id, false)}
-                                  disabled={approvalLoading === product.id}
-                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                                >
-                                  {approvalLoading === product.id ? (
-                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                                  ) : (
-                                    <X className="w-3 h-3 mr-1" />
-                                  )}
-                                  Reject
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => handleApproval(product.id, true)}
+                                disabled={approvalLoading === product.id}
+                                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                              >
+                                {approvalLoading === product.id ? (
+                                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                                ) : (
+                                  <Check className="w-3 h-3 mr-1" />
+                                )}
+                                Approve
+                              </button>
                             ) : (
                               <span className="text-gray-500 text-xs">
                                 {product.status === 'APPROVED' ? 'Already Approved' : 'Already Rejected'}
@@ -678,32 +664,18 @@ const AdminProducts = () => {
                       </div>
                       
                       {product.status === 'PENDING' ? (
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => handleApproval(product.id, true)}
-                            disabled={approvalLoading === product.id}
-                            className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                          >
-                            {approvalLoading === product.id ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            ) : (
-                              <Check className="w-4 h-4 mr-2" />
-                            )}
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleApproval(product.id, false)}
-                            disabled={approvalLoading === product.id}
-                            className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                          >
-                            {approvalLoading === product.id ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            ) : (
-                              <X className="w-4 h-4 mr-2" />
-                            )}
-                            Reject
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleApproval(product.id, true)}
+                          disabled={approvalLoading === product.id}
+                          className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {approvalLoading === product.id ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          ) : (
+                            <Check className="w-4 h-4 mr-2" />
+                          )}
+                          Approve
+                        </button>
                       ) : (
                         <div className="text-center py-2">
                           <span className="text-gray-500 text-sm">
