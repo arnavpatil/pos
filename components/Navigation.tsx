@@ -31,6 +31,9 @@ const Navigation = () => {
     if (userPermissions.includes('tenants')) {
       baseItems.push({ name: 'Tenants', href: '/admin/tenants', permission: 'tenants' });
     }
+    if (userPermissions.includes('admin-products')) {
+      baseItems.push({ name: 'Products', href: '/admin/products', permission: 'admin-products' });
+    }
     if (userPermissions.includes('admin-sales')) {
       baseItems.push({ name: 'Sales', href: '/admin/sales', permission: 'admin-sales' });
     }

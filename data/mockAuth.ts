@@ -130,7 +130,7 @@ export const getRoleDisplayName = (role: string): string => {
 export const getRolePermissions = (role: string): string[] => {
   switch (role) {
     case 'admin':
-      return ['tenants', 'inventory', 'pos', 'reports', 'admin-sales'];
+      return ['tenants', 'inventory', 'pos', 'reports', 'admin-sales', 'admin-products'];
     case 'inventory':
       return ['inventory', 'pos'];
     case 'pos':

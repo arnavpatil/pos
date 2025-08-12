@@ -7,17 +7,25 @@ import Navigation from '@/components/Navigation';
 import { getRolePermissions } from '@/data/mockAuth';
 import { mockProducts, mockCategories, getProductsByCategory, searchProducts } from '@/data/mockProducts';
 import { Product, Category } from '@/types/product';
+import { adminProductService, AdminProduct } from '@/services/adminProductService';
+import { Search, Filter, Upload, Download, Edit, Trash2, Eye, Package, AlertTriangle, TrendingUp, DollarSign, Users, RefreshCw, Check, X } from 'lucide-react';
 
 const AdminProducts = () => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredAdminProducts, setFilteredAdminProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showBatchUpload, setShowBatchUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const [showApprovals, setShowApprovals] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [approvalLoading, setApprovalLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading) {
@@ -35,8 +43,146 @@ const AdminProducts = () => {
       setProducts(mockProducts);
       setFilteredProducts(mockProducts);
       setCategories(mockCategories);
+      
+      // Load admin products for approval
+      loadAdminProducts();
     }
   }, [user, isLoading, router]);
+
+  const loadAdminProducts = async () => {
+    try {
+      setLoading(true);
+      const adminProductsData = await adminProductService.getProducts(selectedTenantId || undefined);
+      
+      // If no data from API, use mock data for testing
+      if (!adminProductsData || adminProductsData.length === 0) {
+        const mockAdminProducts: AdminProduct[] = [
+          {
+            id: 'admin-1',
+            tenantId: 'T001',
+            name: 'Handmade Ceramic Mug',
+            description: 'Beautiful handcrafted ceramic mug with unique glaze pattern',
+            price: 25.99,
+            stock: 15,
+            category: 'accessories',
+            sku: 'MUG-001',
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            tenant: {
+              id: 'T001',
+              businessName: 'Artisan Crafts Co.'
+            },
+            logs: []
+          },
+          {
+            id: 'admin-2',
+            tenantId: 'T002',
+            name: 'Vintage Style Earrings',
+            description: 'Elegant vintage-inspired earrings with antique finish',
+            price: 18.50,
+            stock: 8,
+            category: 'earrings',
+            sku: 'EAR-002',
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            tenant: {
+              id: 'T002',
+              businessName: 'Vintage Jewelry Studio'
+            },
+            logs: []
+          },
+          {
+            id: 'admin-3',
+            tenantId: 'T003',
+            name: 'Custom Logo Stickers',
+            description: 'High-quality vinyl stickers with custom logo design',
+            price: 5.99,
+            stock: 100,
+            category: 'stickers',
+            sku: 'STK-003',
+            status: 'APPROVED',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            tenant: {
+              id: 'T003',
+              businessName: 'Design Print Shop'
+            },
+            logs: []
+          }
+        ];
+        setAdminProducts(mockAdminProducts);
+        setFilteredAdminProducts(mockAdminProducts);
+      } else {
+        setAdminProducts(adminProductsData);
+        setFilteredAdminProducts(adminProductsData);
+      }
+    } catch (error) {
+      console.error('Error loading admin products:', error);
+      // Fallback to mock data for testing
+      const mockAdminProducts: AdminProduct[] = [
+        {
+          id: 'admin-1',
+          tenantId: 'T001',
+          name: 'Handmade Ceramic Mug',
+          description: 'Beautiful handcrafted ceramic mug with unique glaze pattern',
+          price: 25.99,
+          stock: 15,
+          category: 'accessories',
+          sku: 'MUG-001',
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          tenant: {
+            id: 'T001',
+            businessName: 'Artisan Crafts Co.'
+          },
+          logs: []
+        },
+        {
+          id: 'admin-2',
+          tenantId: 'T002',
+          name: 'Vintage Style Earrings',
+          description: 'Elegant vintage-inspired earrings with antique finish',
+          price: 18.50,
+          stock: 8,
+          category: 'earrings',
+          sku: 'EAR-002',
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          tenant: {
+            id: 'T002',
+            businessName: 'Vintage Jewelry Studio'
+          },
+          logs: []
+        }
+      ];
+      setAdminProducts(mockAdminProducts);
+      setFilteredAdminProducts(mockAdminProducts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproval = async (productId: string, approve: boolean) => {
+    try {
+      setApprovalLoading(productId);
+      await adminProductService.approveProduct(productId, approve);
+      
+      // Reload products after approval
+      await loadAdminProducts();
+      
+      // Show success message
+      alert(`Product ${approve ? 'approved' : 'rejected'} successfully!`);
+    } catch (error) {
+      console.error('Error updating approval:', error);
+      alert(`Failed to ${approve ? 'approve' : 'reject'} product. Please try again.`);
+    } finally {
+      setApprovalLoading(null);
+    }
+  };
 
   useEffect(() => {
     let filtered = products;
@@ -59,6 +205,34 @@ const AdminProducts = () => {
 
     setFilteredProducts(filtered);
   }, [products, selectedCategory, searchTerm]);
+
+  useEffect(() => {
+    let filtered = adminProducts;
+
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+
+    // Search filter
+    if (searchTerm) {
+      const lowercaseQuery = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(lowercaseQuery) ||
+        product.sku.toLowerCase().includes(lowercaseQuery) ||
+        product.category.toLowerCase().includes(lowercaseQuery) ||
+        product.tenant.businessName.toLowerCase().includes(lowercaseQuery)
+      );
+    }
+
+    setFilteredAdminProducts(filtered);
+  }, [adminProducts, selectedCategory, searchTerm]);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadAdminProducts();
+    }
+  }, [selectedTenantId]);
 
   const handleBatchUpload = () => {
     if (!uploadFile) return;
@@ -147,10 +321,12 @@ const AdminProducts = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'inactive': return 'bg-red-100 text-red-800';
+    switch (status.toUpperCase()) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'APPROVED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      case 'INACTIVE': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -259,7 +435,31 @@ const AdminProducts = () => {
         {/* Filters and Actions */}
         <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex flex-col space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* View Toggle */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowApprovals(false)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  !showApprovals 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Product Management
+              </button>
+              <button
+                onClick={() => setShowApprovals(true)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  showApprovals 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Product Approvals
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select
@@ -270,16 +470,30 @@ const AdminProducts = () => {
                   <option value="all">All Categories</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.name}>
-                      {category.name} ({products.filter(p => p.category === category.name).length})
+                      {category.name} ({showApprovals ? filteredAdminProducts.filter(p => p.category === category.name).length : products.filter(p => p.category === category.name).length})
                     </option>
                   ))}
                 </select>
               </div>
+              
+              {showApprovals && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Tenant</label>
+                  <input
+                    type="text"
+                    placeholder="Enter Tenant ID (optional)"
+                    value={selectedTenantId}
+                    onChange={(e) => setSelectedTenantId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
                 <input
                   type="text"
-                  placeholder="Search by name, barcode, or artist..."
+                  placeholder={showApprovals ? "Search by name, SKU, or tenant..." : "Search by name, barcode, or artist..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -287,24 +501,43 @@ const AdminProducts = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={() => setShowBatchUpload(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Batch Upload
-              </button>
-              <button
-                onClick={exportProducts}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Excel
-              </button>
+              {!showApprovals ? (
+                <>
+                  <button
+                    onClick={() => setShowBatchUpload(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Batch Upload
+                  </button>
+                  <button
+                    onClick={exportProducts}
+                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Excel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => loadAdminProducts()}
+                  disabled={loading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center disabled:opacity-50"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  ) : (
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                  Refresh Approvals
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -313,11 +546,187 @@ const AdminProducts = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              Products ({filteredProducts.length} items)
+              {showApprovals ? 'Product Approvals' : 'Products'} ({showApprovals ? filteredAdminProducts.length : filteredProducts.length} items)
             </h3>
           </div>
           
-          {filteredProducts.length > 0 ? (
+          {showApprovals ? (
+            /* Admin Products Approval Table */
+            filteredAdminProducts.length > 0 ? (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Price
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tenant
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredAdminProducts.map((product) => (
+                        <tr key={product.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                              <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                              <div className="text-sm text-gray-500 truncate max-w-xs">{product.description}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {product.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${product.price.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {product.tenant.businessName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)}`}>
+                              {product.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {product.status === 'PENDING' ? (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleApproval(product.id, true)}
+                                  disabled={approvalLoading === product.id}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                                >
+                                  {approvalLoading === product.id ? (
+                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                                  ) : (
+                                    <Check className="w-3 h-3 mr-1" />
+                                  )}
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleApproval(product.id, false)}
+                                  disabled={approvalLoading === product.id}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                >
+                                  {approvalLoading === product.id ? (
+                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                                  ) : (
+                                    <X className="w-3 h-3 mr-1" />
+                                  )}
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-gray-500 text-xs">
+                                {product.status === 'APPROVED' ? 'Already Approved' : 'Already Rejected'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile/Tablet Cards for Admin Products */}
+                <div className="lg:hidden">
+                  {filteredAdminProducts.map((product) => (
+                    <div key={product.id} className="border-b border-gray-200 p-4 sm:p-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
+                          <p className="text-xs text-gray-500 mt-1">SKU: {product.sku}</p>
+                          <p className="text-xs text-gray-500 mt-1 truncate">{product.description}</p>
+                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)} ml-2`}>
+                          {product.status}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Category</p>
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {product.category}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Price</p>
+                          <p className="text-sm font-medium text-gray-900">${product.price.toFixed(2)}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-500">Tenant</p>
+                          <p className="text-sm text-gray-900 truncate">{product.tenant.businessName}</p>
+                        </div>
+                      </div>
+                      
+                      {product.status === 'PENDING' ? (
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => handleApproval(product.id, true)}
+                            disabled={approvalLoading === product.id}
+                            className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                          >
+                            {approvalLoading === product.id ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            ) : (
+                              <Check className="w-4 h-4 mr-2" />
+                            )}
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleApproval(product.id, false)}
+                            disabled={approvalLoading === product.id}
+                            className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {approvalLoading === product.id ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            ) : (
+                              <X className="w-4 h-4 mr-2" />
+                            )}
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center py-2">
+                          <span className="text-gray-500 text-sm">
+                            {product.status === 'APPROVED' ? 'Already Approved' : 'Already Rejected'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="p-12 text-center">
+                <Package className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No products pending approval</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {loading ? 'Loading products...' : 'All products have been reviewed or no products match your filters.'}
+                </p>
+              </div>
+            )
+          ) : (
+            /* Regular Products Table */
+            filteredProducts.length > 0 ? (
             <>
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
@@ -459,6 +868,7 @@ const AdminProducts = () => {
                 }
               </p>
             </div>
+          )
           )}
         </div>
       </div>
