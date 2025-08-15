@@ -595,7 +595,11 @@ const AdminProducts = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredAdminProducts.map((product) => (
-                        <tr key={product.id} className="hover:bg-gray-50">
+                        <tr 
+                          key={product.id} 
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/admin/products/${product.id}`)}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
                               <div className="text-sm font-medium text-gray-900">{product.name}</div>
@@ -622,7 +626,10 @@ const AdminProducts = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {product.status === 'PENDING' ? (
                               <button
-                                onClick={() => handleApproval(product.id, true)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleApproval(product.id, true);
+                                }}
                                 disabled={approvalLoading === product.id}
                                 className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                               >
@@ -648,7 +655,11 @@ const AdminProducts = () => {
                 {/* Mobile/Tablet Cards for Admin Products */}
                 <div className="lg:hidden">
                   {filteredAdminProducts.map((product) => (
-                    <div key={product.id} className="border-b border-gray-200 p-4 sm:p-6">
+                    <div 
+                      key={product.id} 
+                      className="border-b border-gray-200 p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => router.push(`/admin/products/${product.id}`)}
+                    >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
@@ -675,11 +686,18 @@ const AdminProducts = () => {
                           <p className="text-xs text-gray-500">Tenant</p>
                           <p className="text-sm text-gray-900 truncate">{product.tenant.businessName}</p>
                         </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-500">Stock</p>
+                          <p className="text-sm font-medium text-gray-900">{product.stock} units</p>
+                        </div>
                       </div>
                       
                       {product.status === 'PENDING' ? (
                         <button
-                          onClick={() => handleApproval(product.id, true)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApproval(product.id, true);
+                          }}
                           disabled={approvalLoading === product.id}
                           className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                         >

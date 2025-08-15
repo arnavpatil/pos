@@ -4,16 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
-import TenantList from "@/components/TenantList";
 import TenantForm from "@/components/TenantForm";
-import LeaseManagement from "@/components/LeaseManagement";
-import RentCollection from "@/components/RentCollection";
-import NotificationManager from "@/components/NotificationManager";
 import { Tenant, TenantFormData, RentPayment } from "@/types/tenant";
 import { getRolePermissions } from "@/data/mockAuth";
-import { tenantService } from "@/services/tenantService";
+import { adminTenantService } from "@/services/adminTenantService";
 
-type TabType = "list" | "lease" | "rent" | "notifications";
+
 
 interface ApiTenant {
   id: string;
@@ -57,7 +53,7 @@ export default function TenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>("list");
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,9 +61,9 @@ export default function TenantsPage() {
   // Fetch tenants from API
   const fetchTenants = async () => {
     try {
-      console.log("Fetching tenants using tenantService...");
+      console.log("Fetching tenants using adminTenantService...");
       
-      const apiTenants: ApiTenant[] = await tenantService.viewAllTenants();
+      const apiTenants: ApiTenant[] = await adminTenantService.getTenants();
       console.log("API Response:", apiTenants);
       
       // Convert API tenants to the format expected by the UI
@@ -302,12 +298,7 @@ export default function TenantsPage() {
     document.body.removeChild(link);
   };
 
-  const tabs = [
-    { id: "list" as TabType, name: "Tenant List", icon: "👥" },
-    { id: "lease" as TabType, name: "Lease Management", icon: "📋" },
-    { id: "rent" as TabType, name: "Rent Collection", icon: "💰" },
-    { id: "notifications" as TabType, name: "Notifications", icon: "🔔" },
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -324,78 +315,172 @@ export default function TenantsPage() {
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                    activeTab === tab.id
-                      ? "border-primary-500 text-primary-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="mr-1 sm:mr-2">{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.name}</span>
-                  <span className="sm:hidden">{tab.name.split(" ")[0]}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-2 sm:space-y-0">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Tenant Management
+          </h2>
+          <button
+            onClick={handleAddTenant}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span>Add New Tenant</span>
+          </button>
         </div>
 
-        {/* Tab Content */}
-        <div className="space-y-6">
-          {activeTab === "list" && (
-            <>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Tenant Management
-                </h2>
-                <button
-                  onClick={() => downloadPaymentHistory()}
-                  className="btn-secondary flex items-center space-x-2"
+        {/* Tenant Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {tenants.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-400 mb-4">
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <span>Download All Payment History</span>
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
               </div>
-              <TenantList
-                tenants={tenants}
-                onViewTenant={handleViewTenant}
-                onAddNew={handleAddTenant}
-              />
-            </>
-          )}
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tenants found
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Get started by adding your first tenant.
+              </p>
+              <button
+                onClick={handleAddTenant}
+                className="btn-primary"
+              >
+                Add First Tenant
+              </button>
+            </div>
+          ) : (
+            tenants.map((tenant) => (
+              <div
+                key={tenant.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleViewTenant(tenant.id)}
+              >
+                {/* Status Badge */}
+                <div className="flex justify-between items-start mb-4">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      tenant.status === "Active"
+                        ? "bg-green-100 text-green-800"
+                        : tenant.status === "Upcoming"
+                        ? "bg-blue-100 text-blue-800"
+                        : tenant.status === "Expired"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {tenant.status}
+                  </span>
+                  <span className="text-sm font-medium text-gray-500">
+                    Cube {tenant.cubeId}
+                  </span>
+                </div>
 
-          {activeTab === "lease" && (
-            <LeaseManagement
-              tenants={tenants}
-              onUpdateLease={handleUpdateLease}
-            />
-          )}
+                {/* Business Name */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {tenant.businessName}
+                </h3>
 
-          {activeTab === "rent" && (
-            <RentCollection tenants={tenants} onAddPayment={handleAddPayment} />
-          )}
+                {/* Contact Info */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg
+                      className="w-4 h-4 mr-2 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    {tenant.name}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg
+                      className="w-4 h-4 mr-2 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    {tenant.email}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg
+                      className="w-4 h-4 mr-2 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    {tenant.phone}
+                  </div>
+                </div>
 
-          {activeTab === "notifications" && (
-            <NotificationManager tenants={tenants} />
+                {/* Rental Info */}
+                <div className="border-t border-gray-100 pt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      Monthly Rent
+                    </span>
+                    <span className="text-lg font-bold text-primary-600">
+                      ${tenant.monthlyRent}
+                    </span>
+                  </div>
+                  {tenant.leaseStartDate && tenant.leaseEndDate && (
+                    <div className="text-xs text-gray-500">
+                      {new Date(tenant.leaseStartDate).toLocaleDateString()} -{" "}
+                      {new Date(tenant.leaseEndDate).toLocaleDateString()}
+                    </div>
+                  )}
+                  {tenant.notes && (
+                    <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                      {tenant.notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </div>
 

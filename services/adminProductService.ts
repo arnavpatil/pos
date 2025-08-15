@@ -167,6 +167,10 @@ class AdminProductService {
   async rejectProduct(productId: string): Promise<AdminProduct> {
     return this.approveProduct(productId, false);
   }
+
+  async getAllProducts(): Promise<AdminProduct[]> {
+    return this.getProducts();
+  }
 }
 
 export const adminProductService = new AdminProductService();
