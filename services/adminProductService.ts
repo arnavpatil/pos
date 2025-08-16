@@ -31,6 +31,10 @@ export interface AdminProduct {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
+  imageUrl?: string;
+  colors?: string[];
+  size?: string;
+  defaultColor?: string;
   tenant: Tenant;
   logs: ProductLog[];
 }
@@ -89,6 +93,10 @@ class AdminProductService {
           status: 'PENDING',
           createdAt: '2024-01-15T10:30:00Z',
           updatedAt: '2024-01-15T10:30:00Z',
+          imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
+          colors: ['Blue', 'Green', 'White'],
+          size: 'Medium (8 inches)',
+          defaultColor: 'Blue',
           tenant: {
             id: 'tenant-1',
             businessName: 'Art Corner Studio'

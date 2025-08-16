@@ -2,30 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('Proxying tenant products GET request to deployed API...');
+    console.log('Using local mock data for tenant products...');
     
-    // Get authorization header from the request
-    const authHeader = request.headers.get('authorization');
+    // Import mock data
+    const { mockProducts, getProductsByTenant } = await import('@/data/mockProducts');
     
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header is required' },
-        { status: 401 }
-      );
+    // Get tenant ID from query parameters
+    const { searchParams } = new URL(request.url);
+    const tenantId = searchParams.get('tenantId');
+    
+    let products;
+    if (tenantId) {
+      products = getProductsByTenant(tenantId);
+      console.log(`Found ${products.length} products for tenant ${tenantId}`);
+      console.log('Sample product data:', JSON.stringify(products[0], null, 2));
+    } else {
+      // If no tenantId provided, return all products
+      products = mockProducts;
+      console.log(`Returning all ${products.length} products`);
     }
-
-    // Make request to deployed API
-    const response = await fetch('https://cornven-pos-system.vercel.app/tenant/products', {
-      method: 'GET',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log('Deployed API response status:', response.status);
-
-    const data = await response.json();
 
     // Set CORS headers
     const corsHeaders = {
@@ -34,13 +29,13 @@ export async function GET(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
-    return NextResponse.json(data, { 
-      status: response.status,
+    return NextResponse.json(products, { 
+      status: 200,
       headers: corsHeaders
     });
 
   } catch (error) {
-    console.error('Error proxying tenant products GET request:', error);
+    console.error('Error fetching tenant products:', error);
     return NextResponse.json(
       { error: 'Failed to fetch tenant products' },
       { status: 500 }

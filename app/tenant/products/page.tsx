@@ -13,12 +13,17 @@ const TenantProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [newColor, setNewColor] = useState('');
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     price: 0,
     stock: 0,
     category: '',
     description: '',
+    imageUrl: '',
+    colors: [],
+    size: '',
+    defaultColor: '',
     commissionRate: 15,
     deliveryMethod: 'handover',
     lowStockThreshold: 5,
@@ -38,17 +43,61 @@ const TenantProducts = () => {
       }
 
       if (user.tenantId) {
-        const tenantProducts = getProductsByTenant(user.tenantId);
-        setProducts(tenantProducts);
+        fetchProducts(user.tenantId);
       }
     }
   }, [user, isLoading, router]);
+
+  const fetchProducts = async (tenantId: string) => {
+    console.log('fetchProducts called with tenantId:', tenantId);
+    try {
+      const response = await fetch(`/api/tenant/products?tenantId=${tenantId}`);
+      console.log('API response status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API response data:', data);
+        console.log('First product sample:', data[0]);
+        setProducts(data);
+      } else {
+        console.error('Failed to fetch products');
+        // Fallback to local mock data
+        const tenantProducts = getProductsByTenant(tenantId);
+        console.log('Using fallback data:', tenantProducts);
+        setProducts(tenantProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Fallback to local mock data
+      const tenantProducts = getProductsByTenant(tenantId);
+      console.log('Using fallback data due to error:', tenantProducts);
+      setProducts(tenantProducts);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value
+    }));
+  };
+
+  const addColor = () => {
+    if (newColor.trim() && !formData.colors?.includes(newColor.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [...(prev.colors || []), newColor.trim()],
+        defaultColor: prev.defaultColor || newColor.trim()
+      }));
+      setNewColor('');
+    }
+  };
+
+  const removeColor = (colorToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      colors: prev.colors?.filter(color => color !== colorToRemove) || [],
+      defaultColor: prev.defaultColor === colorToRemove ? (prev.colors?.[0] || '') : prev.defaultColor
     }));
   };
 
@@ -95,6 +144,10 @@ const TenantProducts = () => {
       stock: 0,
       category: '',
       description: '',
+      imageUrl: '',
+      colors: [],
+      size: '',
+      defaultColor: '',
       commissionRate: 15,
       deliveryMethod: 'handover',
       lowStockThreshold: 5,
@@ -110,6 +163,10 @@ const TenantProducts = () => {
       stock: product.stock,
       category: product.category,
       description: product.description || '',
+      imageUrl: product.imageUrl || '',
+      colors: product.colors || [],
+      size: product.size || '',
+      defaultColor: product.defaultColor || '',
       commissionRate: product.commissionRate,
       deliveryMethod: product.deliveryMethod,
       lowStockThreshold: product.lowStockThreshold,
@@ -126,6 +183,10 @@ const TenantProducts = () => {
       stock: 0,
       category: '',
       description: '',
+      imageUrl: '',
+      colors: [],
+      size: '',
+      defaultColor: '',
       commissionRate: 15,
       deliveryMethod: 'handover',
       lowStockThreshold: 5,
@@ -287,19 +348,127 @@ const TenantProducts = () => {
                 </select>
               </div>
 
-              <div className="md:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+              <div>
+                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
+                  Size
                 </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
+                <input
+                  type="text"
+                  id="size"
+                  name="size"
+                  value={formData.size}
                   onChange={handleInputChange}
-                  rows={3}
+                  placeholder="e.g., S, M, L, XL or custom size"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Image URL
+                </label>
+                <input
+                  type="url"
+                  id="imageUrl"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Product preview"
+                      className="w-20 h-20 object-cover rounded-md border"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://via.placeholder.com/80x80/e5e7eb/9ca3af?text=No+Image';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="md:col-span-2">
+                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                   Available Colors
+                 </label>
+                 <div className="space-y-2">
+                   <div className="flex gap-2">
+                     <input
+                       type="text"
+                       value={newColor}
+                       onChange={(e) => setNewColor(e.target.value)}
+                       placeholder="Enter color name (e.g., Red, Blue, #FF0000)"
+                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
+                     />
+                     <button
+                       type="button"
+                       onClick={addColor}
+                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                     >
+                       Add Color
+                     </button>
+                   </div>
+                   {formData.colors && formData.colors.length > 0 && (
+                     <div className="flex flex-wrap gap-2">
+                       {formData.colors.map((color, index) => (
+                         <div
+                           key={index}
+                           className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"
+                         >
+                           <div
+                             className="w-4 h-4 rounded-full border border-gray-300"
+                             style={{ backgroundColor: color.startsWith('#') ? color : 'transparent' }}
+                           ></div>
+                           <span>{color}</span>
+                           <button
+                             type="button"
+                             onClick={() => removeColor(color)}
+                             className="text-red-500 hover:text-red-700 ml-1"
+                           >
+                             ×
+                           </button>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                   {formData.colors && formData.colors.length > 1 && (
+                     <div>
+                       <label htmlFor="defaultColor" className="block text-sm font-medium text-gray-600 mb-1">
+                         Default Color
+                       </label>
+                       <select
+                         id="defaultColor"
+                         name="defaultColor"
+                         value={formData.defaultColor}
+                         onChange={handleInputChange}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       >
+                         {formData.colors.map(color => (
+                           <option key={color} value={color}>{color}</option>
+                         ))}
+                       </select>
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+               <div className="md:col-span-2">
+                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                   Description
+                 </label>
+                 <textarea
+                   id="description"
+                   name="description"
+                   value={formData.description}
+                   onChange={handleInputChange}
+                   rows={3}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 />
+               </div>
 
               <div className="md:col-span-2 flex justify-end space-x-4">
                 <button
@@ -330,34 +499,53 @@ const TenantProducts = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Stock
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Size
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Colors
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {products.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.barcode}</div>
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={product.imageUrl || 'https://via.placeholder.com/40x40/e5e7eb/9ca3af?text=No+Image'}
+                              alt={product.name}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = 'https://via.placeholder.com/40x40/e5e7eb/9ca3af?text=No+Image';
+                              }}
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500">{product.barcode}</div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -374,6 +562,32 @@ const TenantProducts = () => {
                         </span>
                         {product.stock <= product.lowStockThreshold && (
                           <div className="text-xs text-red-500">Low Stock</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {product.size || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {product.colors && product.colors.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {product.colors.slice(0, 3).map((color, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs"
+                              >
+                                <div
+                                  className="w-3 h-3 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: color.startsWith('#') ? color : 'transparent' }}
+                                ></div>
+                                <span>{color}</span>
+                              </div>
+                            ))}
+                            {product.colors.length > 3 && (
+                              <span className="text-xs text-gray-500">+{product.colors.length - 3} more</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500">No colors</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

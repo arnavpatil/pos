@@ -10,6 +10,10 @@ export interface Product {
   tenantName: string;
   description?: string;
   imageUrl?: string;
+  images?: { [color: string]: string }; // Color-specific images
+  colors?: string[]; // Available colors array
+  size?: string; // Product size
+  defaultColor?: string; // Default selected color
   status: 'active' | 'pending' | 'inactive';
   commissionRate: number; // Percentage
   deliveryMethod: 'handover' | 'consignment';
@@ -33,6 +37,9 @@ export interface ProductFormData {
   category: string;
   description?: string;
   imageUrl?: string;
+  colors?: string[];
+  size?: string;
+  defaultColor?: string;
   commissionRate: number;
   deliveryMethod: 'handover' | 'consignment';
   lowStockThreshold: number;
