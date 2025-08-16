@@ -17,7 +17,6 @@ export default function AddProductPage() {
     description: '',
     category: '',
     sku: '',
-    imageUrl: '',
     variants: [{
       color: '',
       size: '',
@@ -141,12 +140,12 @@ export default function AddProductPage() {
         throw new Error('Please complete all variant information');
       }
       
-      // Use Google Drive URL if provided, otherwise use base64 preview
-      const finalImageUrl = formData.imageUrl || imagePreview || undefined;
-      
       const submitData: AddProductRequest = {
-        ...formData,
-        imageUrl: finalImageUrl
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        sku: formData.sku,
+        variants: formData.variants
       };
       
       const result = await tenantPortalService.addProduct(submitData);
@@ -334,22 +333,7 @@ export default function AddProductPage() {
               </p>
             </div>
             
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Or paste Google Drive Image URL
-              </label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="https://drive.google.com/uc?id=YOUR_FILE_ID"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                If you provide a Google Drive URL, it will override the uploaded image
-              </p>
-            </div>
+
           </div>
 
           {/* Product Variants */}

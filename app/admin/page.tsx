@@ -349,7 +349,7 @@ const AdminDashboard = () => {
               <p className="text-gray-600 mt-1">Track all product changes and modifications</p>
             </div>
             <div className="p-6">
-              {adminProducts.length > 0 && adminProducts.some(product => product.logs.length > 0) ? (
+              {adminProducts.length > 0 && adminProducts.some(product => product.logs && product.logs.length > 0) ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -379,7 +379,7 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {adminProducts.flatMap(product => 
-                        product.logs.map(log => (
+                        (product.logs || []).map(log => (
                           <tr key={log.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>

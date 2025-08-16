@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { tenantPortalService, TenantDetails, TenantProduct, AddProductRequest } from '@/services/tenantPortalService';
+import { tenantPortalService, TenantDetails, TenantProduct } from '@/services/tenantPortalService';
 import { authService } from '@/services/authService';
 import Snackbar from '@/components/Snackbar';
 
@@ -15,25 +15,20 @@ const TenantDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'logs' | 'profile'>('dashboard');
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [productForm, setProductForm] = useState<AddProductRequest>({
-    name: '',
-    description: '',
-    price: 0,
-    stock: 0,
-    category: ''
-  });
-  const [submitting, setSubmitting] = useState(false);
+
+
   const [showUpdateStock, setShowUpdateStock] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<TenantProduct | null>(null);
   const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0 });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
+
   const [snackbar, setSnackbar] = useState<{
     isVisible: boolean;
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   }>({ isVisible: false, message: '', type: 'success' });
+
 
   useEffect(() => {
     if (!isLoading) {
@@ -73,43 +68,16 @@ const TenantDashboard = () => {
     }
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
 
-    try {
-      const result = await tenantPortalService.addProduct(productForm);
-      
-      if (result.success) {
-        // Reset form and close modal
-        setProductForm({
-          name: '',
-          description: '',
-          price: 0,
-          stock: 0,
-          category: ''
-        });
-        setShowAddProduct(false);
-        
-        // Reload products
-        await loadTenantData();
-        
-        alert('Product submitted for approval successfully!');
-      } else {
-        alert(result.message || 'Failed to add product');
-      }
-    } catch (err) {
-      console.error('Error adding product:', err);
-      alert('Failed to add product');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const openUpdateStockModal = (product: TenantProduct) => {
     setSelectedProduct(product);
     setUpdateStockForm({ price: product.price, stock: product.stock });
     setShowUpdateStock(true);
+  };
+
+  const handleProductClick = (product: TenantProduct) => {
+    router.push(`/tenant/products/${product.id}`);
   };
 
   const handleUpdateStock = async (e: React.FormEvent) => {
@@ -155,6 +123,8 @@ const TenantDashboard = () => {
       setIsUpdatingStock(false);
     }
   };
+
+
 
   const closeSnackbar = () => {
     setSnackbar(prev => ({ ...prev, isVisible: false }));
@@ -469,7 +439,7 @@ const TenantDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">My Products</h2>
               <button
-                onClick={() => setShowAddProduct(true)}
+                onClick={() => router.push('/tenant/products/add')}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -484,17 +454,45 @@ const TenantDashboard = () => {
                 {tenantProducts.length > 0 ? (
                   <div className="space-y-4">
                     {tenantProducts.map((product) => (
-                      <div key={product.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleProductClick(product)}>
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
+                            {/* Product Image - Placeholder */}
+                            <div className="mb-3">
+                              <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <span className="text-gray-400 text-xs">IMG</span>
+                              </div>
+                            </div>
+                            
                             <h4 className="font-medium text-gray-900">{product.name}</h4>
                             <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+                            
+                            {/* Basic Product Info */}
                             <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-gray-600">Price: ${product.price}</span>
-                              <span className="text-sm text-gray-600">Stock: {product.stock}</span>
+                              <span className="text-sm text-gray-600">Base Price: ${product.price}</span>
+                              <span className="text-sm text-gray-600">Total Stock: {product.stock}</span>
                               <span className="text-sm text-gray-600">Category: {product.category}</span>
                               <span className="text-sm text-gray-600">SKU: {product.sku}</span>
                             </div>
+                            
+                            {/* Variants Display */}
+                            {product.variants && product.variants.length > 0 && (
+                              <div className="mt-3">
+                                <p className="text-sm font-medium text-gray-700 mb-2">Variants ({product.variants.length}):</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {product.variants.slice(0, 3).map((variant, index) => (
+                                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                      {variant.color} {variant.size} - ${variant.price} ({variant.stock} in stock)
+                                    </span>
+                                  ))}
+                                  {product.variants.length > 3 && (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                                      +{product.variants.length - 3} more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center space-x-3">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -507,7 +505,10 @@ const TenantDashboard = () => {
                               {product.status}
                             </span>
                             <button
-                              onClick={() => openUpdateStockModal(product)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openUpdateStockModal(product);
+                              }}
                               className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                             >
                               Update
@@ -707,95 +708,7 @@ const TenantDashboard = () => {
           </div>
         )}
 
-        {/* Add Product Modal */}
-        {showAddProduct && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Add New Product</h3>
-              </div>
-              
-              <form onSubmit={handleAddProduct} className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Product Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={productForm.name}
-                      onChange={(e) => setProductForm({...productForm, name: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      required
-                      value={productForm.description}
-                      onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Price</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={productForm.price}
-                      onChange={(e) => setProductForm({...productForm, price: Number(e.target.value)})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      required
-                      value={productForm.stock}
-                      onChange={(e) => setProductForm({...productForm, stock: Math.floor(Number(e.target.value))})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Category</label>
-                    <input
-                      type="text"
-                      required
-                      value={productForm.category}
-                      onChange={(e) => setProductForm({...productForm, category: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddProduct(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {submitting ? 'Submitting...' : 'Submit for Approval'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+
 
         {/* Update Stock Modal */}
         {showUpdateStock && selectedProduct && (
@@ -871,6 +784,11 @@ const TenantDashboard = () => {
           isVisible={snackbar.isVisible}
           onClose={closeSnackbar}
         />
+
+
+
+        {/* Product Details Modal */}
+
       </div>
     </div>
   );

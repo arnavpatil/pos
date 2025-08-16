@@ -43,11 +43,15 @@ export interface TenantDetails {
 }
 
 export interface ProductVariant {
+  id?: string;
+  productId?: string;
   color: string;
   size: string;
   price: number;
   stock: number;
   sku: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TenantProduct {
@@ -59,7 +63,6 @@ export interface TenantProduct {
   stock: number;
   category: string;
   sku: string;
-  imageUrl?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
@@ -80,7 +83,6 @@ export interface AddProductRequest {
   description: string;
   category: string;
   sku: string;
-  imageUrl?: string;
   variants: ProductVariant[];
 }
 
@@ -91,10 +93,16 @@ export interface UpdateStockRequest {
 
 class TenantPortalService {
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const token = authService.getAuthToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
         ...options.headers,
       },
     });
@@ -153,38 +161,17 @@ class TenantPortalService {
 
   async addProduct(productData: AddProductRequest): Promise<{ success: boolean; data?: TenantProduct; message?: string }> {
     try {
-      const token = authService.getAuthToken();
-      if (!token) {
-        return {
-          success: false,
-          message: 'No authentication token found. Please login again.'
-        };
-      }
-
-      const response = await this.makeRequest('/tenant/products', {
+      const data = await this.makeRequest('/tenant/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify(productData),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      } else {
-        const errorData = await response.json();
-        return { 
-          success: false, 
-          message: errorData.message || 'Failed to add product' 
-        };
-      }
+      
+      return { success: true, data };
     } catch (error) {
       console.error('Error adding product:', error);
       return { 
         success: false, 
-        message: 'Network error occurred while adding product' 
+        message: error instanceof Error ? error.message : 'Network error occurred while adding product' 
       };
     }
   }
@@ -202,6 +189,29 @@ class TenantPortalService {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ price, stock }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async updateVariant(productId: string, variantId: string, price: number, stock: number): Promise<ProductVariant> {
+    const token = authService.getAuthToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/tenant/products/${productId}/variants/${variantId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ price: price.toString(), stock: stock.toString() }),
     });
 
     if (!response.ok) {
