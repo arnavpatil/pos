@@ -11,7 +11,12 @@ import {
   DollarSign,
   Search,
   User,
-  BarChart3
+  BarChart3,
+  X,
+  Calendar,
+  Tag,
+  Eye,
+  Clock
 } from 'lucide-react';
 import { adminProductService, AdminProduct } from '@/services/adminProductService';
 import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
@@ -27,6 +32,8 @@ export default function TenantProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
 
   useEffect(() => {
     const loadTenantProducts = async () => {
@@ -240,7 +247,14 @@ export default function TenantProductsPage() {
                   </tr>
                 ) : (
                   filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={product.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setShowProductModal(true);
+                      }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">{product.name}</div>
@@ -280,10 +294,16 @@ export default function TenantProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button className="text-indigo-600 hover:text-indigo-900">
+                          <button 
+                            className="text-indigo-600 hover:text-indigo-900"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button 
+                            className="text-red-600 hover:text-red-900"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -295,6 +315,164 @@ export default function TenantProductsPage() {
             </table>
           </div>
         </div>
+
+        {/* Product Details Modal */}
+        {showProductModal && selectedProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-900">Product Details</h2>
+                <button
+                  onClick={() => setShowProductModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                {/* Basic Product Information */}
+                <div className="mb-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">{selectedProduct.name}</h3>
+                      <p className="text-gray-600 mt-1">{selectedProduct.description}</p>
+                    </div>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedProduct.status)}`}>
+                      {selectedProduct.status}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">SKU</div>
+                      <div className="font-mono font-medium">{selectedProduct.sku}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">Category</div>
+                      <div className="font-medium">{selectedProduct.category}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">Price</div>
+                      <div className="font-semibold text-green-600">${selectedProduct.price}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">Stock</div>
+                      <div className={`font-medium ${
+                        selectedProduct.stock === 0 ? 'text-red-600' :
+                        selectedProduct.stock <= 5 ? 'text-yellow-600' :
+                        'text-gray-900'
+                      }`}>
+                        {selectedProduct.stock}
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <div className="text-sm text-blue-600 font-medium">Total Value</div>
+                      <div className="font-bold text-blue-700">
+                        ${
+                          (() => {
+                            const baseValue = selectedProduct.price * selectedProduct.stock;
+                            const variantValue = selectedProduct.variants?.reduce((sum, variant) => 
+                              sum + (variant.price * variant.stock), 0
+                            ) || 0;
+                            return (baseValue + variantValue).toFixed(2);
+                          })()
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product Variants */}
+                {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <Tag className="w-5 h-5 mr-2" />
+                      Product Variants
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Color</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Value</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedProduct.variants.map((variant) => (
+                            <tr key={variant.id}>
+                              <td className="px-4 py-2 text-sm text-gray-900">{variant.color}</td>
+                              <td className="px-4 py-2 text-sm text-gray-900">{variant.size}</td>
+                              <td className="px-4 py-2 text-sm font-mono text-gray-900">{variant.sku}</td>
+                              <td className="px-4 py-2 text-sm font-semibold text-green-600">${variant.price}</td>
+                              <td className="px-4 py-2 text-sm text-gray-900">{variant.stock}</td>
+                              <td className="px-4 py-2 text-sm font-bold text-blue-600">${(variant.price * variant.stock).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Logs */}
+                {selectedProduct.logs && selectedProduct.logs.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <Clock className="w-5 h-5 mr-2" />
+                      Activity Logs
+                    </h4>
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {selectedProduct.logs.map((log) => (
+                        <div key={log.id} className="bg-gray-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {log.changeType.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 mb-1">
+                            By: {log.user.name}
+                          </div>
+                          {log.previousValue && (
+                            <div className="text-xs text-gray-500">
+                              Previous: {log.previousValue}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-700">
+                            New: {log.newValue}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Timestamps */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <div className="text-sm text-gray-500">Created At</div>
+                    <div className="text-sm text-gray-900">
+                      {new Date(selectedProduct.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">Updated At</div>
+                    <div className="text-sm text-gray-900">
+                      {new Date(selectedProduct.updatedAt).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

@@ -1,8 +1,21 @@
 // Admin Product Service for managing product approvals and filtering
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  color: string;
+  size: string;
+  price: number;
+  stock: number;
+  sku: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProductLog {
   id: string;
   productId: string;
+  productVariantId?: string | null;
   userId: string;
   changeType: string;
   previousValue: string | null;
@@ -32,7 +45,8 @@ export interface AdminProduct {
   createdAt: string;
   updatedAt: string;
   tenant: Tenant;
-  logs: ProductLog[];
+  variants?: ProductVariant[];
+  logs?: ProductLog[];
 }
 
 export interface ProductApprovalRequest {
