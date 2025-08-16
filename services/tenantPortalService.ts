@@ -42,6 +42,14 @@ export interface TenantDetails {
   }>;
 }
 
+export interface ProductVariant {
+  color: string;
+  size: string;
+  price: number;
+  stock: number;
+  sku: string;
+}
+
 export interface TenantProduct {
   id: string;
   tenantId: string;
@@ -51,9 +59,11 @@ export interface TenantProduct {
   stock: number;
   category: string;
   sku: string;
+  imageUrl?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
+  variants?: ProductVariant[];
   logs?: Array<{
     id: string;
     productId: string;
@@ -68,9 +78,10 @@ export interface TenantProduct {
 export interface AddProductRequest {
   name: string;
   description: string;
-  price: number;
-  stock: number;
   category: string;
+  sku: string;
+  imageUrl?: string;
+  variants: ProductVariant[];
 }
 
 export interface UpdateStockRequest {
@@ -144,30 +155,36 @@ class TenantPortalService {
     try {
       const token = authService.getAuthToken();
       if (!token) {
-        throw new Error("Authentication token not found. Please login again.");
+        return {
+          success: false,
+          message: 'No authentication token found. Please login again.'
+        };
       }
 
-      const response = await this.makeRequest(
-        "/tenant/products",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(productData),
-        }
-      );
+      const response = await this.makeRequest('/tenant/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+      });
 
-      return {
-        success: true,
-        data: response,
-        message: "Product submitted for approval successfully",
-      };
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data };
+      } else {
+        const errorData = await response.json();
+        return { 
+          success: false, 
+          message: errorData.message || 'Failed to add product' 
+        };
+      }
     } catch (error) {
-      console.error("Error adding product:", error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to add product",
+      console.error('Error adding product:', error);
+      return { 
+        success: false, 
+        message: 'Network error occurred while adding product' 
       };
     }
   }

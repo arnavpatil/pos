@@ -47,6 +47,7 @@ export interface AdminProduct {
   tenant: Tenant;
   variants?: ProductVariant[];
   logs?: ProductLog[];
+  imageUrl?: string;
 }
 
 export interface ProductApprovalRequest {

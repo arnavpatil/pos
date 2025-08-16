@@ -334,11 +334,30 @@ export default function TenantProductsPage() {
                 {/* Basic Product Information */}
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">{selectedProduct.name}</h3>
-                      <p className="text-gray-600 mt-1">{selectedProduct.description}</p>
+                    <div className="flex items-start space-x-4 flex-1">
+                      {/* Product Image */}
+                      {(selectedProduct as any).imageUrl ? (
+                        <img 
+                          src={(selectedProduct as any).imageUrl} 
+                          alt={selectedProduct.name}
+                          className="w-24 h-24 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                      
+                      {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-2xl font-bold text-gray-900">{selectedProduct.name}</h3>
+                        <p className="text-gray-600 mt-1">{selectedProduct.description}</p>
+                      </div>
                     </div>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedProduct.status)}`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedProduct.status)} flex-shrink-0 ml-4`}>
                       {selectedProduct.status}
                     </span>
                   </div>

@@ -577,10 +577,13 @@ const AdminProducts = () => {
                           Product
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Image
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Category
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
+                          Variants
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Tenant
@@ -608,12 +611,49 @@ const AdminProducts = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
+                            {product.imageUrl ? (
+                              <img 
+                                src={product.imageUrl} 
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                                <Package className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                               {product.category}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${product.price.toFixed(2)}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {product.variants && product.variants.length > 0 ? (
+                                <div>
+                                  <div className="font-medium">{product.variants.length} variant(s)</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {product.variants.slice(0, 2).map((variant, idx) => (
+                                      <div key={idx}>
+                                        {variant.color} {variant.size} - ${variant.price}
+                                      </div>
+                                    ))}
+                                    {product.variants.length > 2 && (
+                                      <div className="text-blue-600">+{product.variants.length - 2} more</div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="font-medium">Base Product</div>
+                                  <div className="text-xs text-gray-500">${product.price.toFixed(2)}</div>
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {product.tenant.businessName}
@@ -661,12 +701,28 @@ const AdminProducts = () => {
                       onClick={() => router.push(`/admin/products/${product.id}`)}
                     >
                       <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
-                          <p className="text-xs text-gray-500 mt-1">SKU: {product.sku}</p>
-                          <p className="text-xs text-gray-500 mt-1 truncate">{product.description}</p>
+                        <div className="flex items-start space-x-3 flex-1 min-w-0">
+                          {product.imageUrl ? (
+                            <img 
+                              src={product.imageUrl} 
+                              alt={product.name}
+                              className="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                              <Package className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
+                            <p className="text-xs text-gray-500 mt-1">SKU: {product.sku}</p>
+                            <p className="text-xs text-gray-500 mt-1 truncate">{product.description}</p>
+                          </div>
                         </div>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)} ml-2`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(product.status)} ml-2 flex-shrink-0`}>
                           {product.status}
                         </span>
                       </div>
@@ -679,16 +735,27 @@ const AdminProducts = () => {
                           </span>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Price</p>
-                          <p className="text-sm font-medium text-gray-900">${product.price.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500">Variants</p>
+                          <div className="text-xs text-gray-900">
+                            {product.variants && product.variants.length > 0 ? (
+                              <div>
+                                {product.variants.slice(0, 2).map((variant, index) => (
+                                  <div key={index} className="mb-1">
+                                    {variant.color} {variant.size} - ${variant.price}
+                                  </div>
+                                ))}
+                                {product.variants.length > 2 && (
+                                  <div className="text-gray-500">+{product.variants.length - 2} more</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-500">No variants</span>
+                            )}
+                          </div>
                         </div>
                         <div className="col-span-2">
                           <p className="text-xs text-gray-500">Tenant</p>
                           <p className="text-sm text-gray-900 truncate">{product.tenant.businessName}</p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-xs text-gray-500">Stock</p>
-                          <p className="text-sm font-medium text-gray-900">{product.stock} units</p>
                         </div>
                       </div>
                       
