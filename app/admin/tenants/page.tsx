@@ -66,7 +66,7 @@ export default function TenantsPage() {
       console.log('Current user:', user);
       
       console.log('Calling adminTenantService.getTenants()...');
-      const apiTenants: ApiTenant[] = await adminTenantService.getTenants();
+      const apiTenants = await adminTenantService.getTenants();
       console.log('Raw API response:', apiTenants);
       console.log('API response type:', typeof apiTenants);
       console.log('API response length:', Array.isArray(apiTenants) ? apiTenants.length : 'Not an array');
@@ -108,7 +108,7 @@ export default function TenantsPage() {
           cubeId: activeRental?.cube?.code || "-",
           leaseStartDate: activeRental?.startDate || "",
           leaseEndDate: activeRental?.endDate || "",
-          monthlyRent: activeRental?.dailyRent ? (activeRental.dailyRent * 30) : 0, // Convert daily to monthly
+          monthlyRent: activeRental?.cube?.pricePerMonth || 0, // Use cube's monthly price
           securityDeposit: 0, // Not in API
           status,
           rentPayments: [], // Not in current API structure
@@ -204,27 +204,27 @@ export default function TenantsPage() {
     const now = new Date();
     const start = new Date(startDate);
     const end = new Date(endDate);
-    let status: "Upcoming" | "Active" | "Expired" = "Expired";
+    let status: "Upcoming" | "Active" | "Inactive" = "Inactive";
 
     if (now < start) {
       status = "Upcoming";
     } else if (now >= start && now <= end) {
       status = "Active";
     } else {
-      status = "Expired";
+      status = "Inactive";
     }
 
-    setTenants((prev) =>
+    setTenants((prev: Tenant[]) =>
       prev.map((tenant) => {
         if (tenant.id === tenantId) {
           return {
-            ...tenant,
+            ...tenant as Tenant,
             leaseStartDate: startDate,
             leaseEndDate: endDate,
             status,
           };
         }
-        return tenant;
+return tenant as Tenant;
       })
     );
   };
@@ -402,7 +402,7 @@ export default function TenantsPage() {
                         ? "bg-green-100 text-green-800"
                         : tenant.status === "Upcoming"
                         ? "bg-blue-100 text-blue-800"
-                        : tenant.status === "Expired"
+                        : tenant.status === "Inactive"
                         ? "bg-red-100 text-red-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
@@ -520,7 +520,7 @@ export default function TenantsPage() {
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="text-2xl font-bold text-red-600">
-              {tenants.filter((t) => t.status === "Expired").length}
+              {tenants.filter((t) => t.status === "Inactive").length}
             </div>
             <div className="text-sm text-gray-600">Expired Leases</div>
           </div>
