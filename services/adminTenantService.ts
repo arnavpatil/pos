@@ -45,16 +45,20 @@ export interface AdminTenant {
 }
 
 class AdminTenantService {
-  private baseUrl = 'https://cornven-pos-system.vercel.app';
+  private baseUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/api` 
+    : 'http://localhost:3001/api';
 
   async getTenants(): Promise<AdminTenant[]> {
     try {
-      console.log('Fetching tenants from deployed API:', `${this.baseUrl}/admin/tenants-allocations`);
+      console.log('Fetching tenants from local API proxy:', `${this.baseUrl}/admin/tenants-allocations`);
       
       const token = authService.getAuthToken();
       if (!token) {
         throw new Error('No authentication token available');
       }
+
+      console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
       const response = await fetch(`${this.baseUrl}/admin/tenants-allocations`, {
         method: 'GET',
@@ -64,12 +68,18 @@ class AdminTenantService {
         },
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('Successfully fetched tenants:', data.length, 'items');
+      console.log('Successfully fetched tenants:', Array.isArray(data) ? data.length : 'Not array', 'items');
+      console.log('Raw tenant data:', data);
       return data;
     } catch (error) {
       console.error('Error fetching tenants:', error);

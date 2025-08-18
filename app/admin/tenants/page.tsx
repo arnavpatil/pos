@@ -32,7 +32,7 @@ interface ApiTenant {
     startDate: string;
     endDate: string;
     status: string;
-    monthlyRent: number;
+    dailyRent: number;
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;
@@ -61,17 +61,26 @@ export default function TenantsPage() {
   // Fetch tenants from API
   const fetchTenants = async () => {
     try {
-      console.log("Fetching tenants using adminTenantService...");
+      console.log('=== TENANT FETCH DEBUG ===');
+      console.log('Is authenticated:', isAuthenticated);
+      console.log('Current user:', user);
       
+      console.log('Calling adminTenantService.getTenants()...');
       const apiTenants: ApiTenant[] = await adminTenantService.getTenants();
-      console.log("API Response:", apiTenants);
+      console.log('Raw API response:', apiTenants);
+      console.log('API response type:', typeof apiTenants);
+      console.log('API response length:', Array.isArray(apiTenants) ? apiTenants.length : 'Not an array');
+      
+      if (Array.isArray(apiTenants) && apiTenants.length > 0) {
+        console.log('First tenant sample:', apiTenants[0]);
+      }
       
       // Convert API tenants to the format expected by the UI
       const convertedTenants: Tenant[] = apiTenants.map((apiTenant) => {
         // Handle multiple rentals - get the most recent active one or the first one
         const activeRental = apiTenant.rentals.find(rental => rental.status === "ACTIVE") || apiTenant.rentals[0];
         
-        let status: "Upcoming" | "Active" | "Expired" | "Available" = "Expired";
+        let status: "Upcoming" | "Active" | "Inactive" | "Available" = "Available";
         
         if (activeRental) {
           const now = new Date();
@@ -79,14 +88,14 @@ export default function TenantsPage() {
           const endDate = new Date(activeRental.endDate);
           
           if (activeRental.status === "ACTIVE" && now >= startDate && now <= endDate) {
-            status = "Active";
+            status = "Active"; // Currently renting and within rental period
           } else if (now < startDate) {
-            status = "Upcoming";
+            status = "Upcoming"; // Has rental but start date is in future
           } else {
-            status = "Expired";
+            status = "Inactive"; // Rental period has ended
           }
         } else {
-          // If no active rental, set status to Available
+          // No rentals - tenant is approved but hasn't rented any cube
           status = "Available";
         }
 
@@ -99,7 +108,7 @@ export default function TenantsPage() {
           cubeId: activeRental?.cube?.code || "-",
           leaseStartDate: activeRental?.startDate || "",
           leaseEndDate: activeRental?.endDate || "",
-          monthlyRent: activeRental?.monthlyRent || 0,
+          monthlyRent: activeRental?.dailyRent ? (activeRental.dailyRent * 30) : 0, // Convert daily to monthly
           securityDeposit: 0, // Not in API
           status,
           rentPayments: [], // Not in current API structure
@@ -113,8 +122,13 @@ export default function TenantsPage() {
       
       console.log("All converted tenants:", convertedTenants);
       setTenants(convertedTenants);
-    } catch (error) {
-      console.error("Error fetching tenants:", error);
+      console.log('Tenants state updated');
+    } catch (error: any) {
+      console.error('=== TENANT FETCH ERROR ===');
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error object:', error);
+      setTenants([]);
     } finally {
       setLoading(false);
     }

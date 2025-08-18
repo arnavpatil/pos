@@ -6,52 +6,32 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import { getRolePermissions } from '@/data/mockAuth';
 import { authService } from '@/services/authService';
-import { tenantService } from '@/services/tenantService';
+import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
 
-// Define the tenant interface based on the new API structure
-interface ApiTenant {
-  id: string;
-  userId: string;
-  businessName: string;
-  address: string;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  rentals: Array<{
-    id: string;
-    tenantId: string;
-    cubeId: string;
-    startDate: string;
-    endDate: string;
-    status: string;
-    monthlyRent: number;
-    lastPayment: string | null;
-    createdAt: string;
-    updatedAt: string;
-    allocatedById: string;
-    cube: {
-      id: string;
-      code: string;
-      size: string;
-      pricePerMonth: number;
-      status: string;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }>;
-}
+// Using AdminTenant interface from adminTenantService
+
+// Calculate status based on rental dates and status (updated business rules)
+const calculateRentalStatus = (rental: any): "Upcoming" | "Active" | "Inactive" | "Available" => {
+  if (!rental) return "Available"; // No rentals - tenant is approved but hasn't rented any cube
+  
+  const now = new Date();
+  const startDate = new Date(rental.startDate);
+  const endDate = new Date(rental.endDate);
+  
+  if (rental.status === "ACTIVE" && now >= startDate && now <= endDate) {
+    return "Active"; // Currently renting and within rental period
+  } else if (now < startDate) {
+    return "Upcoming"; // Has rental but start date is in future
+  } else {
+    return "Inactive"; // Rental period has ended
+  }
+};
 
 export default function TenantDetailsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const [tenant, setTenant] = useState<ApiTenant | null>(null);
+  const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,7 +50,7 @@ export default function TenantDetailsPage() {
     const fetchTenant = async () => {
       try {
         setLoading(true);
-        const tenants: ApiTenant[] = await tenantService.viewAllTenants();
+        const tenants: AdminTenant[] = await adminTenantService.getTenants();
         const tenantId = params.id as string;
         const foundTenant = tenants.find(t => t.id === tenantId);
         
@@ -145,15 +125,17 @@ export default function TenantDetailsPage() {
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 text-sm font-medium rounded-full";
     
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
+    switch (status) {
+      case 'Active':
         return `${baseClasses} bg-green-100 text-green-800`;
-      case 'UPCOMING':
-        return `${baseClasses} bg-blue-100 text-blue-800`;
-      case 'EXPIRED':
-        return `${baseClasses} bg-red-100 text-red-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
+      case 'Upcoming':
+         return `${baseClasses} bg-blue-100 text-blue-800`;
+       case 'Inactive':
+         return `${baseClasses} bg-red-100 text-red-800`;
+       case 'Available':
+         return `${baseClasses} bg-gray-100 text-gray-800`;
+       default:
+         return `${baseClasses} bg-gray-100 text-gray-800`;
     }
   };
 
@@ -226,8 +208,8 @@ export default function TenantDetailsPage() {
               <h1 className="text-3xl font-bold text-gray-900">{tenant.user.name}</h1>
               <p className="text-gray-600 mt-1">{tenant.businessName}</p>
             </div>
-            <span className={getStatusBadge(tenant.rentals[0]?.status || 'INACTIVE')}>
-              {tenant.rentals[0]?.status || 'INACTIVE'}
+            <span className={getStatusBadge(tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available')}>
+              {tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available'}
             </span>
           </div>
         </div>
@@ -296,8 +278,8 @@ export default function TenantDetailsPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                          <span className={getStatusBadge(rental.status)}>
-                            {rental.status}
+                          <span className={getStatusBadge(calculateRentalStatus(rental))}>
+                            {calculateRentalStatus(rental)}
                           </span>
                         </div>
                         <div>

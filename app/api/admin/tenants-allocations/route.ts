@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     
     console.log('Deployed API response status:', response.status);
+    console.log('Deployed API response data type:', typeof data);
+    console.log('Deployed API response is array:', Array.isArray(data));
+    console.log('Deployed API response length:', Array.isArray(data) ? data.length : 'Not array');
+    console.log('Deployed API response sample:', Array.isArray(data) && data.length > 0 ? data[0] : data);
     
     if (!response.ok) {
       return NextResponse.json(
