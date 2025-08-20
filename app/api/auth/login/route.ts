@@ -8,14 +8,20 @@ export async function POST(request: NextRequest) {
     
     console.log('Proxying login request to deployed API...');
     
-    // Proxy the request to the deployed API
+    // Proxy the request to the deployed API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const response = await fetch(`${DEPLOYED_API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     const data = await response.json();
     
@@ -46,10 +52,40 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Proxy login error:', error);
+    
+    // Handle specific timeout and connection errors
+    if (error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: 'Login request timed out. Please try again.' },
+        { 
+          status: 408,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+    
+    if (error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+      return NextResponse.json(
+        { error: 'Unable to connect to login service. Please check your connection and try again.' },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to connect to authentication server' },
+      { error: 'Login service temporarily unavailable. Please try again later.' },
       { 
-        status: 500,
+        status: 503,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
