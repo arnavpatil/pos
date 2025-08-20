@@ -66,13 +66,13 @@ const ProductDetail = () => {
       setApprovalLoading(true);
       await adminProductService.approveProduct(product.id, approve);
       
-      // Reload product details
+      // Reload product detailss
       await loadProductDetails();
       
       // Show success message
       alert(`Product ${approve ? 'approved' : 'rejected'} successfully!`);
     } catch (error) {
-      console.error('Error updating approval:', error);
+      console.error('Error updating approval.:', error);
       alert(`Failed to ${approve ? 'approve' : 'reject'} product. Please try again.`);
     } finally {
       setApprovalLoading(false);
