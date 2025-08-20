@@ -14,13 +14,14 @@ const TenantDashboard = () => {
   const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'logs' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products'>('dashboard');
 
 
   const [showUpdateStock, setShowUpdateStock] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<TenantProduct | null>(null);
   const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0 });
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
 
   const [snackbar, setSnackbar] = useState<{
@@ -216,7 +217,7 @@ const TenantDashboard = () => {
                   </div>
                   <button
                     onClick={() => {
-                      setActiveTab('profile');
+                      setShowProfileModal(true);
                       setShowUserMenu(false);
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -258,26 +259,7 @@ const TenantDashboard = () => {
             >
               Products
             </button>
-            <button
-              onClick={() => setActiveTab('logs')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'logs'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Logs
-            </button>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'profile'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Profile
-            </button>
+
           </nav>
         </div>
 
@@ -531,182 +513,9 @@ const TenantDashboard = () => {
           </div>
         )}
 
-        {/* Profile Tab */}
-        {activeTab === 'profile' && tenantDetails && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
-            
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Name</label>
-                        <p className="text-gray-900">{tenantDetails.user.name}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Email</label>
-                        <p className="text-gray-900">{tenantDetails.user.email}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Phone</label>
-                        <p className="text-gray-900">{tenantDetails.user.phone}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Business Name</label>
-                        <p className="text-gray-900">{tenantDetails.businessName}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Address</label>
-                        <p className="text-gray-900">{tenantDetails.address}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Notes</label>
-                        <p className="text-gray-900">{tenantDetails.notes || 'No notes'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Member Since</label>
-                        <p className="text-gray-900">{new Date(tenantDetails.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Logs Tab */}
-        {activeTab === 'logs' && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Change Logs</h2>
-            
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6">
-                {tenantProducts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p className="text-gray-500">No product logs available</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {tenantProducts.map(product => {
-                      const logs = (product as any).logs || [];
-                      if (logs.length === 0) return null;
-                      
-                      return (
-                        <div key={product.id} className="border border-gray-200 rounded-lg">
-                          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                            <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
-                            <p className="text-sm text-gray-600">SKU: {product.sku}</p>
-                          </div>
-                          
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                              <thead className="bg-gray-50">
-                                <tr>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Change Type
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Previous Value
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    New Value
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date & Time
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-white divide-y divide-gray-200">
-                                {logs.map((log: any) => {
-                                  const getChangeTypeDisplay = (changeType: string) => {
-                                    switch (changeType) {
-                                      case 'SUBMISSION':
-                                        return { text: 'Initial Submission', color: 'bg-blue-100 text-blue-800' };
-                                      case 'PRICE_UPDATE':
-                                        return { text: 'Price Update', color: 'bg-green-100 text-green-800' };
-                                      case 'STOCK_UPDATE':
-                                        return { text: 'Stock Update', color: 'bg-yellow-100 text-yellow-800' };
-                                      case 'STATUS_CHANGE':
-                                        return { text: 'Status Change', color: 'bg-purple-100 text-purple-800' };
-                                      default:
-                                        return { text: changeType, color: 'bg-gray-100 text-gray-800' };
-                                    }
-                                  };
-                                  
-                                  const changeTypeDisplay = getChangeTypeDisplay(log.changeType);
-                                  
-                                  const formatValue = (value: string | null, changeType: string) => {
-                                    if (value === null) return '-';
-                                    
-                                    if (changeType === 'SUBMISSION') {
-                                      try {
-                                        const parsed = JSON.parse(value);
-                                        return `Price: $${parsed.price}, Stock: ${parsed.stock}`;
-                                      } catch {
-                                        return value;
-                                      }
-                                    }
-                                    
-                                    if (changeType === 'PRICE_UPDATE') {
-                                      return `$${value}`;
-                                    }
-                                    
-                                    return value;
-                                  };
-                                  
-                                  return (
-                                    <tr key={log.id} className="hover:bg-gray-50">
-                                      <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${changeTypeDisplay.color}`}>
-                                          {changeTypeDisplay.text}
-                                        </span>
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {formatValue(log.previousValue, log.changeType)}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {formatValue(log.newValue, log.changeType)}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(log.createdAt).toLocaleString()}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {tenantProducts.every(product => !(product as any).logs || (product as any).logs.length === 0) && (
-                      <div className="text-center py-8">
-                        <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p className="text-gray-500">No change logs available for your products</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+
+
 
 
 
@@ -722,8 +531,9 @@ const TenantDashboard = () => {
               <form onSubmit={handleUpdateStock} className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Price</label>
+                    <label htmlFor="price-input" className="block text-sm font-medium text-gray-700">Price</label>
                     <input
+                      id="price-input"
                       type="number"
                       step="0.01"
                       required
@@ -734,8 +544,9 @@ const TenantDashboard = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                    <label htmlFor="stock-input" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
                     <input
+                      id="stock-input"
                       type="number"
                       step="1"
                       min="0"
@@ -785,10 +596,83 @@ const TenantDashboard = () => {
           onClose={closeSnackbar}
         />
 
-
-
-        {/* Product Details Modal */}
-
+        {/* Profile Modal */}
+        {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Close profile modal"
+                title="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                <p className="text-gray-900">{tenantDetails?.businessName || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
+                <p className="text-gray-900">{tenantDetails?.user?.name || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <p className="text-gray-900">{tenantDetails?.user?.email || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <p className="text-gray-900">{tenantDetails?.user?.phone || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <p className="text-gray-900">{tenantDetails?.address || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rental Start Date</label>
+                <p className="text-gray-900">
+                  {tenantDetails?.rentals?.[0]?.startDate ? new Date(tenantDetails.rentals[0].startDate).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rental End Date</label>
+                <p className="text-gray-900">
+                  {tenantDetails?.rentals?.[0]?.endDate ? new Date(tenantDetails.rentals[0].endDate).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent</label>
+                <p className="text-gray-900">
+                  {tenantDetails?.rentals?.[0]?.monthlyRent ? `$${tenantDetails.rentals[0].monthlyRent.toFixed(2)}` : 'N/A'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
