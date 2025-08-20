@@ -241,7 +241,7 @@ export default function InventoryPage() {
             <div className="flex items-center min-w-0 flex-1">
               {selectedArtist && (
                 <button
-                  title="Go back to all artists"
+                  title="Go back"
                   onClick={() => setSelectedArtist(null)}
                   className="mr-3 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
