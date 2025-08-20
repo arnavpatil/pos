@@ -18,8 +18,8 @@ const TenantDashboard = () => {
 
 
   const [showUpdateStock, setShowUpdateStock] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<TenantProduct | null>(null);
-  const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0 });
+  
+  const [updateStockForm, setUpdateStockForm] = useState({ price: 0, stock: 0, productId: '' });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
@@ -72,8 +72,7 @@ const TenantDashboard = () => {
 
 
   const openUpdateStockModal = (product: TenantProduct) => {
-    setSelectedProduct(product);
-    setUpdateStockForm({ price: product.price, stock: product.stock });
+    setUpdateStockForm({ price: product.price, stock: product.stock, productId: product.id });
     setShowUpdateStock(true);
   };
 
@@ -83,12 +82,12 @@ const TenantDashboard = () => {
 
   const handleUpdateStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct) return;
+    if (!updateStockForm.productId) return;
 
     setIsUpdatingStock(true);
     try {
       const updatedProduct = await tenantPortalService.updateProductStock(
-        selectedProduct.id, 
+        updateStockForm.productId, 
         updateStockForm.stock, 
         updateStockForm.price
       );
@@ -96,14 +95,14 @@ const TenantDashboard = () => {
       // Update the product in the local state
       setTenantProducts(prev => 
         prev.map(product => 
-          product.id === selectedProduct.id 
+          product.id === updateStockForm.productId 
             ? { ...product, stock: updatedProduct.stock, price: updatedProduct.price }
             : product
         )
       );
       
       setShowUpdateStock(false);
-      setSelectedProduct(null);
+      setUpdateStockForm({ price: 0, stock: 0, productId: '' });
       
       // Show success snackbar
       setSnackbar({
@@ -434,67 +433,63 @@ const TenantDashboard = () => {
             <div className="bg-white rounded-lg shadow">
               <div className="p-6">
                 {tenantProducts.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {tenantProducts.map((product) => (
-                      <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleProductClick(product)}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            {/* Product Image - Placeholder */}
-                            <div className="mb-3">
-                              <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                <span className="text-gray-400 text-xs">IMG</span>
-                              </div>
-                            </div>
-                            
-                            <h4 className="font-medium text-gray-900">{product.name}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{product.description}</p>
-                            
-                            {/* Basic Product Info */}
-                            <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-gray-600">Base Price: ${product.price}</span>
-                              <span className="text-sm text-gray-600">Total Stock: {product.stock}</span>
-                              <span className="text-sm text-gray-600">Category: {product.category}</span>
-                              <span className="text-sm text-gray-600">SKU: {product.sku}</span>
-                            </div>
-                            
-                            {/* Variants Display */}
+                      <div key={product.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleProductClick(product)}>
+                        {/* Product Image */}
+                        <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-t-lg">
+                          <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                            </svg>
+                          </div>
+                        </div>
+                        
+                        {/* Product Info */}
+                        <div className="p-3">
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">{product.name}</h4>
+                          
+                          {/* Price */}
+                          <div className="text-lg font-bold text-gray-900 mb-2">${product.price}</div>
+                          
+                          {/* Stock and Variants */}
+                          <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                            <span>{product.stock} units available</span>
                             {product.variants && product.variants.length > 0 && (
-                              <div className="mt-3">
-                                <p className="text-sm font-medium text-gray-700 mb-2">Variants ({product.variants.length}):</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {product.variants.slice(0, 3).map((variant, index) => (
-                                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                      {variant.color} {variant.size} - ${variant.price} ({variant.stock} in stock)
-                                    </span>
-                                  ))}
-                                  {product.variants.length > 3 && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                      +{product.variants.length - 3} more
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                              <span>{product.variants.length} variants</span>
                             )}
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              product.status === 'APPROVED' 
-                                ? 'bg-green-100 text-green-800'
-                                : product.status === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {product.status}
-                            </span>
-                            {/* <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openUpdateStockModal(product);
-                              }}
-                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                            >
-                              Update
-                            </button> */}
+                          
+                          {/* Status Labels */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {product.stock <= 5 && product.stock > 0 && (
+                              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                Low Stock
+                              </span>
+                            )}
+                            {product.stock === 0 && (
+                              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                                Out of Stock
+                              </span>
+                            )}
+                            {product.status === 'PENDING' && (
+                              <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
+                                Pending Approval
+                              </span>
+                            )}
+                            {product.status === 'APPROVED' && product.stock > 5 && (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                In Stock
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Click to view details */}
+                          <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors flex items-center justify-center mt-3 pt-3 border-t border-gray-100">
+                            <span>Click to view details</span>
+                            <svg className="w-3 h-3 ml-1 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </div>
                         </div>
                       </div>
@@ -520,12 +515,14 @@ const TenantDashboard = () => {
 
 
         {/* Update Stock Modal */}
-        {showUpdateStock && selectedProduct && (
+        {showUpdateStock && updateStockForm.productId && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
               <div className="px-6 py-4 border-b border-gray-200">
                 {/* <h3 className="text-lg font-medium text-gray-900">Update Product</h3> */}
-                <p className="text-sm text-gray-600 mt-1">{selectedProduct.name}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {tenantProducts.find(p => p.id === updateStockForm.productId)?.name || ''}
+                </p>
               </div>
               
               <form onSubmit={handleUpdateStock} className="p-6">
@@ -563,7 +560,7 @@ const TenantDashboard = () => {
                     type="button"
                     onClick={() => {
                       setShowUpdateStock(false);
-                      setSelectedProduct(null);
+setShowUpdateStock(false);
                     }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                   >
@@ -587,6 +584,8 @@ const TenantDashboard = () => {
             </div>
           </div>
         )}
+
+
 
         {/* Snackbar */}
         <Snackbar

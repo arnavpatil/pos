@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     console.error('Proxy login error:', error);
     
     // Handle specific timeout and connection errors
-    if (error.name === 'AbortError') {
+    if ((error as Error).name === 'AbortError') {
       return NextResponse.json(
         { error: 'Login request timed out. Please try again.' },
         { 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+    if ((error as { cause?: { code?: string } }).cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
       return NextResponse.json(
         { error: 'Unable to connect to login service. Please check your connection and try again.' },
         { 
