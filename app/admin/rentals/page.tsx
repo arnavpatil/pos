@@ -237,12 +237,12 @@ const RentalsPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Last Payment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </th> */}
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Next Due
-                  </th>
+                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -265,12 +265,12 @@ const RentalsPage = () => {
                         {rental.status.charAt(0).toUpperCase() + rental.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {rental.lastPaymentDate ? formatDate(rental.lastPaymentDate) : 'No payments'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    </td> */}
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(rental.nextDueDate)}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => router.push(`/admin/rentals/${rental.id}/payments`)}

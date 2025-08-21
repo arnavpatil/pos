@@ -161,7 +161,7 @@ export default function TenantDetailsPage() {
     }
 
     // Create CSV content for rentals
-    const headers = ['Rental ID', 'Cube Code', 'Start Date', 'End Date', 'Status', 'Daily Rent', 'Last Payment'];
+    const headers = ['Rental ID', 'Cube Code', 'Start Date', 'End Date', 'Status', 'Daily Rent'];
     const csvContent = [
       headers.join(','),
       ...tenant.rentals.map(rental => [
@@ -282,10 +282,10 @@ export default function TenantDetailsPage() {
                             {calculateRentalStatus(rental)}
                           </span>
                         </div>
-                        <div>
+                        {/* <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Last Payment</label>
                           <p className="text-gray-900">{rental.lastPayment ? formatDate(rental.lastPayment) : 'No payment yet'}</p>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}
@@ -321,7 +321,7 @@ export default function TenantDetailsPage() {
                         <th className="table-header">End Date</th>
                         <th className="table-header">Daily Rent</th>
                         <th className="table-header">Status</th>
-                        <th className="table-header">Last Payment</th>
+                        {/* <th className="table-header">Last Payment</th> */}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -336,7 +336,7 @@ export default function TenantDetailsPage() {
                               {rental.status}
                             </span>
                           </td>
-                          <td className="table-cell text-gray-500">{rental.lastPayment ? formatDate(rental.lastPayment) : 'No payment yet'}</td>
+                          {/* <td className="table-cell text-gray-500">{rental.lastPayment ? formatDate(rental.lastPayment) : 'No payment yet'}</td> */}
                         </tr>
                       ))}
                     </tbody>
