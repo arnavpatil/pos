@@ -8,26 +8,6 @@ import { getRolePermissions } from '@/data/mockAuth';
 import { authService } from '@/services/authService';
 import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
 
-<<<<<<< HEAD
-// Using AdminTenant interface from adminTenantService
-
-// Calculate status based on rental dates and status (updated business rules)
-const calculateRentalStatus = (rental: any): "Upcoming" | "Active" | "Inactive" | "Available" => {
-  if (!rental) return "Available"; // No rentals - tenant is approved but hasn't rented any cube
-  
-  const now = new Date();
-  const startDate = new Date(rental.startDate);
-  const endDate = new Date(rental.endDate);
-  
-  if (rental.status === "ACTIVE" && now >= startDate && now <= endDate) {
-    return "Active"; // Currently renting and within rental period
-  } else if (now < startDate) {
-    return "Upcoming"; // Has rental but start date is in future
-  } else {
-    return "Inactive"; // Rental period has ended
-  }
-};
-=======
 // Define the tenant interface based on the new API structure
 interface ApiTenant {
   id: string;
@@ -66,7 +46,6 @@ interface ApiTenant {
     };
   }>;
 }
->>>>>>> 0a54b791789908e92eb7771d7df72b2a7a66e002
 
 export default function TenantDetailsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
