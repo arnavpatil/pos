@@ -71,7 +71,7 @@ export const mockTenants: Tenant[] = [
     cubeId: 'C2',
     leaseStartDate: '2023-06-01',
     leaseEndDate: '2024-05-31',
-    status: 'Expired',
+    status: 'Inactive',
     dailyRent: 180,
     securityDeposit: 360,
     rentPayments: [

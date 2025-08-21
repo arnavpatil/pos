@@ -108,11 +108,7 @@ export default function TenantsPage() {
           cubeId: activeRental?.cube?.code || "-",
           leaseStartDate: activeRental?.startDate || "",
           leaseEndDate: activeRental?.endDate || "",
-<<<<<<< HEAD
-          dailyRent: activeRental?.cube?.pricePerMonth || 0, // Use cube's monthly price
-=======
           dailyRent: activeRental?.dailyRent || 0,
->>>>>>> 0a54b791789908e92eb7771d7df72b2a7a66e002
           securityDeposit: 0, // Not in API
           status,
           rentPayments: [], // Not in current API structure
