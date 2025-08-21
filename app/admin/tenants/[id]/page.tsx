@@ -228,8 +228,8 @@ export default function TenantDetailsPage() {
               <h1 className="text-3xl font-bold text-gray-900">{tenant.user.name}</h1>
               <p className="text-gray-600 mt-1">{tenant.businessName}</p>
             </div>
-            <span className={getStatusBadge(tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available')}>
-              {tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available'}
+            <span className={getStatusBadge(tenant.rentals && tenant.rentals.length > 0 ? tenant.rentals[0].status : 'Available')}>
+              {tenant.rentals && tenant.rentals.length > 0 ? tenant.rentals[0].status : 'Available'}
             </span>
           </div>
         </div>
@@ -298,8 +298,8 @@ export default function TenantDetailsPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                          <span className={getStatusBadge(calculateRentalStatus(rental))}>
-                            {calculateRentalStatus(rental)}
+                          <span className={getStatusBadge(rental.status)}>
+                            {rental.status}
                           </span>
                         </div>
                         <div>
