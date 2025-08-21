@@ -12,6 +12,7 @@ const TenantDashboard = () => {
   const router = useRouter();
   const [tenantDetails, setTenantDetails] = useState<TenantDetails | null>(null);
   const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<TenantProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products'>('dashboard');
@@ -29,6 +30,16 @@ const TenantDashboard = () => {
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   }>({ isVisible: false, message: '', type: 'success' });
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    status: 'all',
+    category: 'all',
+    stockLevel: 'all',
+    priceRange: 'all',
+    searchTerm: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
 
   useEffect(() => {
@@ -61,12 +72,108 @@ const TenantDashboard = () => {
 
       setTenantDetails(details);
       setTenantProducts(products);
+      setFilteredProducts(products);
     } catch (err) {
       console.error('Error loading tenant data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tenant data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load tenant data';
+      
+      // Check if it's an authentication error
+      if (errorMessage.includes('Authentication failed')) {
+        // Don't set error state as user will be redirected to login
+        return;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filter logic
+  const applyFilters = () => {
+    let filtered = [...tenantProducts];
+
+    // Status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(product => product.status.toLowerCase() === filters.status.toLowerCase());
+    }
+
+    // Category filter
+    if (filters.category !== 'all') {
+      filtered = filtered.filter(product => product.category.toLowerCase() === filters.category.toLowerCase());
+    }
+
+    // Stock level filter
+    if (filters.stockLevel !== 'all') {
+      switch (filters.stockLevel) {
+        case 'low':
+          filtered = filtered.filter(product => product.stock <= 5);
+          break;
+        case 'medium':
+          filtered = filtered.filter(product => product.stock > 5 && product.stock <= 20);
+          break;
+        case 'high':
+          filtered = filtered.filter(product => product.stock > 20);
+          break;
+        case 'out':
+          filtered = filtered.filter(product => product.stock === 0);
+          break;
+      }
+    }
+
+    // Price range filter
+    if (filters.priceRange !== 'all') {
+      switch (filters.priceRange) {
+        case 'low':
+          filtered = filtered.filter(product => product.price <= 10);
+          break;
+        case 'medium':
+          filtered = filtered.filter(product => product.price > 10 && product.price <= 50);
+          break;
+        case 'high':
+          filtered = filtered.filter(product => product.price > 50);
+          break;
+      }
+    }
+
+    // Search term filter
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower) ||
+        product.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  // Apply filters whenever filters or products change
+  useEffect(() => {
+    applyFilters();
+  }, [filters, tenantProducts]);
+
+  // Get unique categories from products
+  const getUniqueCategories = () => {
+    const categories = tenantProducts.map(product => product.category);
+    return Array.from(new Set(categories));
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filterType: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterType]: value }));
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      status: 'all',
+      category: 'all',
+      stockLevel: 'all',
+      priceRange: 'all',
+      searchTerm: ''
+    });
   };
 
 
@@ -419,22 +526,130 @@ const TenantDashboard = () => {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">My Products</h2>
-              <button
-                onClick={() => router.push('/tenant/products/add')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Product
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  Filters ({filteredProducts.length})
+                </button>
+                <button
+                  onClick={() => router.push('/tenant/products/add')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Product
+                </button>
+              </div>
             </div>
+
+            {/* Filter Panel */}
+            {showFilters && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={filters.searchTerm}
+                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Status Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => handleFilterChange('status', e.target.value)}
+                      title="Filter products by status"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  {/* Category Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select
+                      value={filters.category}
+                      onChange={(e) => handleFilterChange('category', e.target.value)}
+                      title="Filter products by category"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Categories</option>
+                      {getUniqueCategories().map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Stock Level Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Level</label>
+                    <select
+                      value={filters.stockLevel}
+                      onChange={(e) => handleFilterChange('stockLevel', e.target.value)}
+                      title="Filter products by stock level"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Stock</option>
+                      <option value="out">Out of Stock (0)</option>
+                      <option value="low">Low Stock (1-5)</option>
+                      <option value="medium">Medium Stock (6-20)</option>
+                      <option value="high">High Stock (20+)</option>
+                    </select>
+                  </div>
+
+                  {/* Price Range Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                    <select
+                      value={filters.priceRange}
+                      onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                      title="Filter products by price range"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Prices</option>
+                      <option value="low">$0 - $10</option>
+                      <option value="medium">$10 - $50</option>
+                      <option value="high">$50+</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Filter Actions */}
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    Showing {filteredProducts.length} of {tenantProducts.length} products
+                  </div>
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="bg-white rounded-lg shadow">
               <div className="p-6">
-                {tenantProducts.length > 0 ? (
+                {filteredProducts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {tenantProducts.map((product) => (
+                    {filteredProducts.map((product) => (
                       <div key={product.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleProductClick(product)}>
                         {/* Product Image */}
                         <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-t-lg">
@@ -496,11 +711,45 @@ const TenantDashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    <p className="text-gray-500">No products yet. Add your first product to get started!</p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {tenantProducts.length === 0 ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        )}
+                      </svg>
+                    </div>
+                    {tenantProducts.length === 0 ? (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
+                        <p className="text-gray-500 mb-6">Start by adding your first product to showcase your items.</p>
+                        <button
+                          onClick={() => router.push('/tenant/products/add')}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 inline-flex items-center"
+                        >
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Add Your First Product
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No products match your filters</h3>
+                        <p className="text-gray-500 mb-6">Try adjusting your filters or search terms to find products.</p>
+                        <button
+                          onClick={clearFilters}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 inline-flex items-center"
+                        >
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Clear All Filters
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
