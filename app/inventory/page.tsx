@@ -27,8 +27,7 @@ import {
 } from 'lucide-react';
 import { 
   mockProducts, 
-  mockCategories, 
-  mockInventoryChanges, 
+  mockCategories,  
   mockLowStockAlerts,
   mockDeliveryLogs,
   filterProducts,
