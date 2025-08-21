@@ -45,26 +45,6 @@ import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Status type for consistent status handling
-type RentalStatus = "Upcoming" | "Active" | "Inactive" | "Available";
-
-// Calculate status based on rental dates and status (updated business rules)
-const calculateRentalStatus = (rental: any): RentalStatus => {
-  if (!rental) return "Available"; // No rentals - tenant is approved but hasn't rented any cube
-  
-  const now = new Date();
-  const startDate = new Date(rental.startDate);
-  const endDate = new Date(rental.endDate);
-  
-  if (rental.status === "ACTIVE" && now >= startDate && now <= endDate) {
-    return "Active"; // Currently renting and within rental period
-  } else if (now < startDate) {
-    return "Upcoming"; // Has rental but start date is in future
-  } else {
-    return "Inactive"; // Rental period has ended
-  }
-};
-
 export default function InventoryPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -567,20 +547,13 @@ export default function InventoryPage() {
                               </td>
                               <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                 <div>
-                                  {(() => {
-                                    const activeRental = tenant.rentals && tenant.rentals.length > 0 ? tenant.rentals[0] : null;
-                                    const calculatedStatus = calculateRentalStatus(activeRental);
-                                    return (
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        calculatedStatus === 'Active' ? 'bg-green-100 text-green-800' :
-                                        calculatedStatus === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
-                                        calculatedStatus === 'Available' ? 'bg-gray-100 text-gray-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        {calculatedStatus}
-                                      </span>
-                                    );
-                                  })()}
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    tenant.rentals.length > 0 && tenant.rentals[0].status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                                    tenant.rentals.length > 0 && tenant.rentals[0].status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {tenant.rentals.length > 0 ? tenant.rentals[0].status : 'INACTIVE'}
+                                  </span>
                                   {tenant.rentals.length > 0 && (
                                     <div className="mt-1">
                                       <div className="text-xs text-gray-500">

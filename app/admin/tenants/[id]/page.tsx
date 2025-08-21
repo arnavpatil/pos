@@ -8,24 +8,44 @@ import { getRolePermissions } from '@/data/mockAuth';
 import { authService } from '@/services/authService';
 import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
 
-// Using AdminTenant interface from adminTenantService
-
-// Calculate status based on rental dates and status (updated business rules)
-const calculateRentalStatus = (rental: any): "Upcoming" | "Active" | "Inactive" | "Available" => {
-  if (!rental) return "Available"; // No rentals - tenant is approved but hasn't rented any cube
-  
-  const now = new Date();
-  const startDate = new Date(rental.startDate);
-  const endDate = new Date(rental.endDate);
-  
-  if (rental.status === "ACTIVE" && now >= startDate && now <= endDate) {
-    return "Active"; // Currently renting and within rental period
-  } else if (now < startDate) {
-    return "Upcoming"; // Has rental but start date is in future
-  } else {
-    return "Inactive"; // Rental period has ended
-  }
-};
+// Define the tenant interface based on the new API structure
+interface ApiTenant {
+  id: string;
+  userId: string;
+  businessName: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  rentals: Array<{
+    id: string;
+    tenantId: string;
+    cubeId: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    dailyRent: number;
+    lastPayment: string | null;
+    createdAt: string;
+    updatedAt: string;
+    allocatedById: string;
+    cube: {
+      id: string;
+      code: string;
+      size: string;
+      pricePerMonth: number;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
+}
 
 export default function TenantDetailsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -208,8 +228,8 @@ export default function TenantDetailsPage() {
               <h1 className="text-3xl font-bold text-gray-900">{tenant.user.name}</h1>
               <p className="text-gray-600 mt-1">{tenant.businessName}</p>
             </div>
-            <span className={getStatusBadge(tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available')}>
-              {tenant.rentals && tenant.rentals.length > 0 ? calculateRentalStatus(tenant.rentals[0]) : 'Available'}
+            <span className={getStatusBadge(tenant.rentals && tenant.rentals.length > 0 ? tenant.rentals[0].status : 'Available')}>
+              {tenant.rentals && tenant.rentals.length > 0 ? tenant.rentals[0].status : 'Available'}
             </span>
           </div>
         </div>
@@ -278,8 +298,8 @@ export default function TenantDetailsPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                          <span className={getStatusBadge(calculateRentalStatus(rental))}>
-                            {calculateRentalStatus(rental)}
+                          <span className={getStatusBadge(rental.status)}>
+                            {rental.status}
                           </span>
                         </div>
                         <div>
