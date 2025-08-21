@@ -724,6 +724,9 @@ const TenantDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Price</label>
                     <input
+                      aria-label="Update product price"
+                      placeholder="Enter product price" 
+                      title="Product price"
                       type="number"
                       step="0.01"
                       required
@@ -736,6 +739,9 @@ const TenantDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
                     <input
+                      aria-label="Update stock quantity" 
+                      placeholder="Enter stock quantity"
+                      title="Stock quantity"
                       type="number"
                       step="1"
                       min="0"
