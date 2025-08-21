@@ -55,6 +55,12 @@ const TenantDashboard = () => {
         return;
       }
 
+      // Additional check for auth token
+      if (!authService.getAuthToken()) {
+        router.push('/auth');
+        return;
+      }
+
       loadTenantData();
     }
   }, [user, isLoading, router]);
@@ -63,6 +69,12 @@ const TenantDashboard = () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Check if user is authenticated before making requests
+      if (!authService.getAuthToken()) {
+        router.push('/auth');
+        return;
+      }
 
       // Load tenant details and products
       const [details, products] = await Promise.all([
@@ -74,15 +86,15 @@ const TenantDashboard = () => {
       setTenantProducts(products);
       setFilteredProducts(products);
     } catch (err) {
-      console.error('Error loading tenant data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load tenant data';
       
       // Check if it's an authentication error
-      if (errorMessage.includes('Authentication failed')) {
-        // Don't set error state as user will be redirected to login
+      if (errorMessage.includes('Authentication failed') || errorMessage.includes('No authentication token')) {
+        // Don't set error state as user will be redirected to auth page
         return;
       }
       
+      console.error('Error loading tenant data:', err);
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -187,6 +199,10 @@ const TenantDashboard = () => {
     router.push(`/tenant/products/${product.id}`);
   };
 
+  const handleEditProduct = (productId: string) => {
+    router.push(`/tenant/products/${productId}/edit`);
+  };
+
   const handleUpdateStock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!updateStockForm.productId) return;
@@ -254,8 +270,16 @@ const TenantDashboard = () => {
     );
   }
 
-  if (!user) {
-    return null;
+  // Show loading state when redirecting due to authentication issues
+  if (!user || !authService.getAuthToken()) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -784,7 +808,7 @@ const TenantDashboard = () => {
                       step="0.01"
                       required
                       value={updateStockForm.price}
-                      onChange={(e) => setUpdateStockForm({...updateStockForm, price: Number(e.target.value)})}
+                      onChange={(e) => setUpdateStockForm({...updateStockForm, price: parseFloat(e.target.value) || 0})}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -809,7 +833,7 @@ const TenantDashboard = () => {
                     type="button"
                     onClick={() => {
                       setShowUpdateStock(false);
-setShowUpdateStock(false);
+                      setUpdateStockForm({ price: 0, stock: 0, productId: '' });
                     }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                   >

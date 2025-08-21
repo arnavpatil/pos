@@ -95,6 +95,10 @@ class TenantPortalService {
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const token = authService.getAuthToken();
     if (!token) {
+      // Redirect to auth page if no token
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth';
+      }
       throw new Error('No authentication token found');
     }
 
@@ -108,6 +112,17 @@ class TenantPortalService {
     });
 
     if (!response.ok) {
+      // Handle authentication errors
+      if (response.status === 401 || response.status === 403) {
+        // Clear invalid token and redirect to auth page
+        authService.removeAuthToken();
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('cornven_user');
+          window.location.href = '/auth';
+        }
+        throw new Error('Authentication failed. Please login again.');
+      }
+      
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
@@ -117,20 +132,9 @@ class TenantPortalService {
 
   async getTenantDetails(): Promise<TenantDetails> {
     try {
-      const token = authService.getAuthToken();
-      if (!token) {
-        throw new Error("Authentication token not found. Please login again.");
-      }
-
-      return await this.makeRequest(
-        "/tenant/my-details",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      return await this.makeRequest("/tenant/my-details", {
+        method: "GET",
+      });
     } catch (error) {
       console.error("Error fetching tenant details:", error);
       throw error;
@@ -139,20 +143,9 @@ class TenantPortalService {
 
   async getTenantProducts(): Promise<TenantProduct[]> {
     try {
-      const token = authService.getAuthToken();
-      if (!token) {
-        throw new Error("Authentication token not found. Please login again.");
-      }
-
-      return await this.makeRequest(
-        "/tenant/products",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      return await this.makeRequest("/tenant/products", {
+        method: "GET",
+      });
     } catch (error) {
       console.error("Error fetching tenant products:", error);
       throw error;
@@ -177,49 +170,29 @@ class TenantPortalService {
   }
 
   async updateProductStock(productId: string, price: number, stock: number): Promise<TenantProduct> {
-    const token = authService.getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/tenant/products/${productId}`, {
+    return await this.makeRequest(`/tenant/products/${productId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
       body: JSON.stringify({ price, stock }),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
   }
 
   async updateVariant(productId: string, variantId: string, price: number, stock: number): Promise<ProductVariant> {
-    const token = authService.getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/tenant/products/${productId}/variants/${variantId}`, {
+    return await this.makeRequest(`/tenant/products/${productId}/variants/${variantId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
       body: JSON.stringify({ price: price.toString(), stock: stock.toString() }),
     });
+  }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
+  async getProductLogs(productId: string): Promise<Array<{
+    id: string;
+    productId: string;
+    userId: string;
+    changeType: string;
+    previousValue: string | null;
+    newValue: string;
+    createdAt: string;
+  }>> {
+    return await this.makeRequest(`/tenant/products/${productId}/logs`);
   }
 }
 
