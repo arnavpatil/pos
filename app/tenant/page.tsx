@@ -803,7 +803,9 @@ const TenantDashboard = () => {
                   <div>
                     <label htmlFor="price-input" className="block text-sm font-medium text-gray-700">Price</label>
                     <input
-                      id="price-input"
+                      aria-label="Update product price"
+                      placeholder="Enter product price" 
+                      title="Product price"
                       type="number"
                       step="0.01"
                       required
@@ -816,7 +818,9 @@ const TenantDashboard = () => {
                   <div>
                     <label htmlFor="stock-input" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
                     <input
-                      id="stock-input"
+                      aria-label="Update stock quantity" 
+                      placeholder="Enter stock quantity"
+                      title="Stock quantity"
                       type="number"
                       step="1"
                       min="0"
