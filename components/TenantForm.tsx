@@ -367,7 +367,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Name *
+                    Full Name *
                   </label>
                   <input
                     type="text"
@@ -376,10 +376,12 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
                     value={formData.name}
                     onChange={handleInputChange}
                     className={`input-field ${errors.name ? 'border-red-500' : ''}`}
-                    placeholder="Enter tenant name"
+                    placeholder="Enter tenant full name"
                   />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
+
+                
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -428,7 +430,19 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
                   />
                   {errors.businessName && <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>}
                 </div>
-
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                     Social Profile URL /  Link
+                  </label>
+                  <input
+                    type="text"
+                    id=""
+                    name=""
+                    className={`input-field ${errors.name ? 'border-red-500' : ''}`}
+                    placeholder="paste the link here"
+                  />
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{}</p>}
+                </div>
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
