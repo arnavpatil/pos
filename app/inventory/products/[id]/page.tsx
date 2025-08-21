@@ -133,6 +133,7 @@ export default function TenantProductsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
+                title="Back to inventory"
                 onClick={() => router.push('/inventory')}
                 className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
               >
@@ -294,13 +295,15 @@ export default function TenantProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button 
+                          <button
+                            title="Edit product"
                             className="text-indigo-600 hover:text-indigo-900"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
+                            title="Delete product"
                             className="text-red-600 hover:text-red-900"
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -323,6 +326,7 @@ export default function TenantProductsPage() {
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-900">Product Details</h2>
                 <button
+                  title="Close modal"
                   onClick={() => setShowProductModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
