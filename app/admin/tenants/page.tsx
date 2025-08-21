@@ -32,7 +32,7 @@ interface ApiTenant {
     startDate: string;
     endDate: string;
     status: string;
-    monthlyRent: number;
+    dailyRent: number;
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;
@@ -99,7 +99,7 @@ export default function TenantsPage() {
           cubeId: activeRental?.cube?.code || "-",
           leaseStartDate: activeRental?.startDate || "",
           leaseEndDate: activeRental?.endDate || "",
-          monthlyRent: activeRental?.monthlyRent || 0,
+          dailyRent: activeRental?.dailyRent || 0,
           securityDeposit: 0, // Not in API
           status,
           rentPayments: [], // Not in current API structure
@@ -461,10 +461,10 @@ export default function TenantsPage() {
                 <div className="border-t border-gray-100 pt-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">
-                      Monthly Rent
+                      Daily Rent
                     </span>
                     <span className="text-lg font-bold text-primary-600">
-                      ${tenant.monthlyRent}
+                      ${tenant.dailyRent}
                     </span>
                   </div>
                   {tenant.leaseStartDate && tenant.leaseEndDate && (

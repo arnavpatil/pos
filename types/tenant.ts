@@ -20,7 +20,7 @@ export interface Tenant {
   status: 'Upcoming' | 'Active' | 'Expired' | 'Available';
   rentPayments: RentPayment[];
   businessType?: string;
-  monthlyRent?: number;
+  dailyRent?: number;
   securityDeposit?: number;
   address?: string;
   notes?: string;

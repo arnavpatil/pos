@@ -8,7 +8,7 @@ export const mockRentPayments: RentPayment[] = [
     date: '2024-08-01',
     tenantId: 'tenant-1',
     status: 'completed',
-    notes: 'Monthly rent payment'
+    notes: 'Daily Rent payment'
   },
   {
     id: 'payment-2',
@@ -17,7 +17,7 @@ export const mockRentPayments: RentPayment[] = [
     date: '2024-09-01',
     tenantId: 'tenant-1',
     status: 'completed',
-    notes: 'Monthly rent payment'
+    notes: 'Daily Rent payment'
   },
   {
     id: 'payment-3',
@@ -42,7 +42,7 @@ export const mockTenants: Tenant[] = [
     leaseStartDate: '2024-08-01',
     leaseEndDate: '2026-01-31',
     status: 'Active',
-    monthlyRent: 200,
+    dailyRent: 200,
     securityDeposit: 400,
     rentPayments: mockRentPayments.filter(payment => payment.tenantId === 'tenant-1')
   },
@@ -57,7 +57,7 @@ export const mockTenants: Tenant[] = [
     leaseStartDate: '2025-02-01',
     leaseEndDate: '2025-07-31',
     status: 'Upcoming',
-    monthlyRent: 180,
+    dailyRent: 180,
     securityDeposit: 360,
     rentPayments: []
   },
@@ -72,7 +72,7 @@ export const mockTenants: Tenant[] = [
     leaseStartDate: '2023-06-01',
     leaseEndDate: '2024-05-31',
     status: 'Expired',
-    monthlyRent: 180,
+    dailyRent: 180,
     securityDeposit: 360,
     rentPayments: [
       {
@@ -91,7 +91,7 @@ export const mockTenants: Tenant[] = [
         date: '2023-07-01',
         tenantId: 'tenant-3',
         status: 'completed',
-        notes: 'Monthly rent payment'
+        notes: 'Daily Rent payment'
       }
     ]
   }

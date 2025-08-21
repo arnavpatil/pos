@@ -45,3 +45,24 @@ export interface PaymentRecord {
   receivedById: string;
   note?: string;
 }
+
+export interface RecordPaymentRequest {
+  amount: number;
+  method: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE';
+  paidAt: string;
+  note?: string;
+}
+
+export interface RecordPaymentResponse {
+  payment: {
+    id: string;
+    rentalId: string;
+    amount: number;
+    method: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE';
+    paidAt: string;
+    receivedById: string;
+    note?: string;
+    createdAt: string;
+  };
+  summary: PaymentSummary;
+}

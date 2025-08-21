@@ -1,7 +1,7 @@
-import { PaymentHistoryResponse } from '../types/payment';
+import { PaymentHistoryResponse, RecordPaymentRequest, RecordPaymentResponse } from '../types/payment';
 
 class AdminPaymentService {
-  private baseUrl = 'https://cornven-pos-system.vercel.app';
+  private baseUrl = '/api';
 
   private getAuthHeaders() {
     const token = localStorage.getItem('cornven_token');
@@ -18,7 +18,7 @@ class AdminPaymentService {
   async getPaymentHistory(rentalId: string): Promise<PaymentHistoryResponse> {
     const headers = this.getAuthHeaders();
     
-    const response = await fetch(`https://cornven-pos-system.vercel.app/admin/rentals/${rentalId}/payments`, {
+    const response = await fetch(`${this.baseUrl}/admin/rentals/${rentalId}/payments`, {
       method: 'GET',
       headers,
     });
@@ -30,12 +30,7 @@ class AdminPaymentService {
     return response.json();
   }
 
-  async recordPayment(rentalId: string, paymentData: {
-    amount: number;
-    method: string;
-    paidAt: string;
-    note?: string;
-  }): Promise<any> {
+  async recordPayment(rentalId: string, paymentData: RecordPaymentRequest): Promise<RecordPaymentResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/admin/rentals/${rentalId}/payments`, {
         method: 'POST',

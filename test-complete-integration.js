@@ -60,7 +60,7 @@ async function runTests() {
       cubeId: 'cube-1', // Using first dummy cube
       startDate: '2024-01-01',
       endDate: '2024-12-31',
-      monthlyRent: 1500,
+      dailyRent: 1500,
       allocatedById: 'admin-user-id'
     };
     await testAPI('/api/admin/tenant-cube-allocation', 'POST', allocation);

@@ -30,7 +30,7 @@ interface ApiTenant {
     startDate: string;
     endDate: string;
     status: string;
-    monthlyRent: number;
+    dailyRent: number;
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;
@@ -179,7 +179,7 @@ export default function TenantDetailsPage() {
     }
 
     // Create CSV content for rentals
-    const headers = ['Rental ID', 'Cube Code', 'Start Date', 'End Date', 'Status', 'Monthly Rent', 'Last Payment'];
+    const headers = ['Rental ID', 'Cube Code', 'Start Date', 'End Date', 'Status', 'Daily Rent', 'Last Payment'];
     const csvContent = [
       headers.join(','),
       ...tenant.rentals.map(rental => [
@@ -188,7 +188,7 @@ export default function TenantDetailsPage() {
         new Date(rental.startDate).toLocaleDateString(),
         new Date(rental.endDate).toLocaleDateString(),
         rental.status,
-        `$${rental.monthlyRent}`,
+        `$${rental.dailyRent}`,
         rental.lastPayment ? new Date(rental.lastPayment).toLocaleDateString() : 'No payment'
       ].join(','))
     ].join('\n');
@@ -291,8 +291,8 @@ export default function TenantDetailsPage() {
                           <p className="text-gray-900">{formatDate(rental.endDate)}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent</label>
-                          <p className="text-gray-900 text-lg font-semibold">{formatCurrency(rental.monthlyRent || 0)}</p>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Daily Rent</label>
+                          <p className="text-gray-900 text-lg font-semibold">{formatCurrency(rental.dailyRent || 0)}</p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -337,7 +337,7 @@ export default function TenantDetailsPage() {
                         <th className="table-header">Cube Code</th>
                         <th className="table-header">Start Date</th>
                         <th className="table-header">End Date</th>
-                        <th className="table-header">Monthly Rent</th>
+                        <th className="table-header">Daily Rent</th>
                         <th className="table-header">Status</th>
                         <th className="table-header">Last Payment</th>
                       </tr>
@@ -348,7 +348,7 @@ export default function TenantDetailsPage() {
                           <td className="table-cell font-medium">{rental.cube?.code || 'N/A'}</td>
                           <td className="table-cell">{formatDate(rental.startDate)}</td>
                           <td className="table-cell">{formatDate(rental.endDate)}</td>
-                          <td className="table-cell font-medium">{formatCurrency(rental.monthlyRent)}</td>
+                          <td className="table-cell font-medium">{formatCurrency(rental.dailyRent)}</td>
                           <td className="table-cell">
                             <span className={getStatusBadge(rental.status)}>
                               {rental.status}
@@ -381,11 +381,11 @@ export default function TenantDetailsPage() {
                   <span className="font-medium">{tenant.rentals?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Monthly Rent</span>
+                  <span className="text-gray-600">Daily Rent</span>
                   <span className="font-medium">
                     {formatCurrency(
                       tenant.rentals?.reduce((sum, rental) => 
-                        rental.status === 'ACTIVE' ? sum + rental.monthlyRent : sum, 0
+                        rental.status === 'ACTIVE' ? sum + rental.dailyRent : sum, 0
                       ) || 0
                     )}
                   </span>

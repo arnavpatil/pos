@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminTenantService, AdminTenant } from '@/services/adminTenantService';
+import { authService } from '@/services/authService';
 
 interface Rental {
   id: string;
@@ -29,6 +30,14 @@ const RentalsPage = () => {
       setError(null);
       
       try {
+        // Check if auth token exists
+        const token = authService.getAuthToken();
+        if (!token) {
+          setError('Authentication token not found. Please log in again.');
+          router.push('/auth');
+          return;
+        }
+
         // Fetch real data from API
         const tenants: AdminTenant[] = await adminTenantService.getTenants();
         
@@ -66,7 +75,7 @@ const RentalsPage = () => {
               id: rental.id,
               tenantName: tenant.user.name,
               propertyAddress: `${tenant.address} - Cube ${rental.cube?.code || 'N/A'}`,
-              rentAmount: rental.monthlyRent,
+              rentAmount: rental.dailyRent,
               status,
               lastPaymentDate: rental.lastPayment || undefined,
               nextDueDate: nextDue.toISOString().split('T')[0]
@@ -84,7 +93,7 @@ const RentalsPage = () => {
     };
 
     loadRentals();
-  }, []);
+  }, [router]);
 
   const filteredRentals = rentals.filter(rental =>
     rental.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||

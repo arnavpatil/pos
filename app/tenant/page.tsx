@@ -421,7 +421,7 @@ const TenantDashboard = () => {
                             }`}>
                               {rental.status}
                             </span>
-                            <p className="text-sm text-gray-600 mt-1">Monthly: ${rental.monthlyRent}</p>
+                            <p className="text-sm text-gray-600 mt-1">Monthly: ${rental.dailyRent}</p>
                           </div>
                         </div>
                       </div>

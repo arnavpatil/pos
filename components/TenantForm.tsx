@@ -238,7 +238,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
       leaseStartDate: leaseStartDate || '',
       leaseEndDate: leaseEndDate || '',
       rentPayments: [],
-      monthlyRent: 0,
+      dailyRent: 0,
       securityDeposit: 0,
       status: 'Active'
     };

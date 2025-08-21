@@ -266,14 +266,14 @@ export const checkRentDueNotifications = async (tenants: any[]): Promise<void> =
 
     // Check for upcoming rent due (3 days before)
     const nextRentDue = new Date(tenant.leaseStartDate);
-    nextRentDue.setMonth(nextRentDue.getMonth() + 1); // Assuming monthly rent
+    nextRentDue.setMonth(nextRentDue.getMonth() + 1); // Assuming Daily Rent
 
     if (nextRentDue <= threeDaysFromNow && nextRentDue > today) {
       await notificationService.sendRentDueNotification(
         tenant.email,
         tenant.phone,
         tenant.name,
-        tenant.monthlyRent || 200, // Default rent amount
+        tenant.dailyRent || 200, // Default rent amount
         nextRentDue.toISOString()
       );
     }
@@ -292,12 +292,12 @@ export const checkOverdueNotifications = async (tenants: any[]): Promise<void> =
       const lastPaymentDate = new Date(lastPayment.date);
       const daysSinceLastPayment = Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      if (daysSinceLastPayment > 30) { // Assuming monthly rent cycle
+      if (daysSinceLastPayment > 30) { // Assuming Daily Rent cycle
         await notificationService.sendOverdueNotification(
           tenant.email,
           tenant.phone,
           tenant.name,
-          tenant.monthlyRent || 200,
+          tenant.dailyRent || 200,
           daysSinceLastPayment - 30
         );
       }

@@ -181,7 +181,7 @@ async function testAssignCube() {
     cubeId: availableCube.id,
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-    monthlyRent: availableCube.pricePerMonth
+    dailyRent: availableCube.pricePerMonth
   };
 
   try {

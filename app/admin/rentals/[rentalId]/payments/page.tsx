@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminPaymentService } from '@/services/adminPaymentService';
-import { PaymentHistoryResponse } from '@/types/payment';
+import { PaymentHistoryResponse, RecordPaymentRequest } from '@/types/payment';
+import RecordPaymentModal from '@/components/RecordPaymentModal';
 
 const PaymentHistoryPage = () => {
   const params = useParams();
@@ -15,6 +16,8 @@ const PaymentHistoryPage = () => {
   const [paymentData, setPaymentData] = useState<PaymentHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   const loadPaymentHistory = async () => {
     if (!rentalId) return;
@@ -42,6 +45,21 @@ const PaymentHistoryPage = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRecordPayment = async (paymentData: RecordPaymentRequest) => {
+    setIsRecordingPayment(true);
+    try {
+      await adminPaymentService.recordPayment(rentalId, paymentData);
+      setIsModalOpen(false);
+      // Reload payment history to show the new payment
+      await loadPaymentHistory();
+    } catch (err) {
+      console.error('Error recording payment:', err);
+      throw err; // Re-throw to let the modal handle the error
+    } finally {
+      setIsRecordingPayment(false);
     }
   };
 
@@ -272,8 +290,17 @@ const PaymentHistoryPage = () => {
 
         {/* Payment History Table */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Record Payment
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -325,6 +352,14 @@ const PaymentHistoryPage = () => {
             )}
           </div>
         </div>
+
+        {/* Record Payment Modal */}
+        <RecordPaymentModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleRecordPayment}
+          isLoading={isRecordingPayment}
+        />
       </div>
     </div>
   );

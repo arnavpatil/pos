@@ -24,7 +24,7 @@ export interface Rental {
   startDate: string;
   endDate: string;
   status: string;
-  monthlyRent: number;
+  dailyRent: number;
   lastPayment: string | null;
   createdAt: string;
   updatedAt: string;
@@ -45,11 +45,11 @@ export interface AdminTenant {
 }
 
 class AdminTenantService {
-  private baseUrl = 'https://cornven-pos-system.vercel.app';
+  private baseUrl = '/api';
 
   async getTenants(): Promise<AdminTenant[]> {
     try {
-      console.log('Fetching tenants from deployed API:', `${this.baseUrl}/admin/tenants-allocations`);
+      console.log('Fetching tenants from local API:', `${this.baseUrl}/admin/tenants-allocations`);
       
       const token = authService.getAuthToken();
       if (!token) {
