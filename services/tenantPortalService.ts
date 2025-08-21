@@ -25,7 +25,7 @@ export interface TenantDetails {
     startDate: string;
     endDate: string;
     status: string;
-    monthlyRent: number;
+    dailyRent: number;
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;

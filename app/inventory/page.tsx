@@ -475,7 +475,7 @@ export default function InventoryPage() {
                           Stock
                         </th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Monthly Rent
+                          Daily Rent
                         </th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Total Value
@@ -622,7 +622,7 @@ export default function InventoryPage() {
                                 {totalStock}
                               </td>
                               <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ${tenant.rentals.length > 0 ? tenant.rentals[0].monthlyRent?.toLocaleString() || '0' : '0'}
+                                ${tenant.rentals.length > 0 ? tenant.rentals[0].dailyRent?.toLocaleString() || '0' : '0'}
                               </td>
                               <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 ${totalRentalValue.toLocaleString()}

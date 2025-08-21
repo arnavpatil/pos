@@ -18,7 +18,7 @@ All three requested API endpoints have been successfully integrated:
 #### **Assign Cube To Tenants API** (`POST /admin/tenant-cube-allocation`)
 - **Endpoint**: `/api/admin/tenant-cube-allocation`
 - **Method**: POST
-- **Required Fields**: `tenantId`, `cubeId`, `startDate`, `endDate`, `monthlyRent`, `allocatedById`
+- **Required Fields**: `tenantId`, `cubeId`, `startDate`, `endDate`, `dailyRent`, `allocatedById`
 - **Features**:
   - Validates all required fields
   - Generates UUID for allocation ID
@@ -86,7 +86,7 @@ All APIs support `Authorization` header as specified in requirements.
 ### Field Validation
 Only specified fields are used and validated:
 - **Add Tenant**: name, email, password, phone, businessName, address, notes
-- **Cube Assignment**: tenantId, cubeId, startDate, endDate, monthlyRent, allocatedById
+- **Cube Assignment**: tenantId, cubeId, startDate, endDate, dailyRent, allocatedById
 
 ### Data Consistency
 - UUIDs for all entities

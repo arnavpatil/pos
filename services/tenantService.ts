@@ -55,7 +55,7 @@ export interface ViewTenantsResponse {
     startDate: string;
     endDate: string;
     status: "ACTIVE" | "INACTIVE" | "EXPIRED";
-    monthlyRent: number;
+    dailyRent: number;
     lastPayment: string | null;
     createdAt: string;
     updatedAt: string;

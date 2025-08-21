@@ -533,7 +533,7 @@ const TenantDashboard = () => {
                             }`}>
                               {rental.status}
                             </span>
-                            <p className="text-sm text-gray-600 mt-1">Monthly: ${rental.monthlyRent}</p>
+                            <p className="text-sm text-gray-600 mt-1">Monthly: ${rental.dailyRent}</p>
                           </div>
                         </div>
                       </div>
@@ -929,7 +929,7 @@ const TenantDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent</label>
                 <p className="text-gray-900">
-                  {tenantDetails?.rentals?.[0]?.monthlyRent ? `$${tenantDetails.rentals[0].monthlyRent.toFixed(2)}` : 'N/A'}
+                  {tenantDetails?.rentals?.[0]?.dailyRent ? `$${tenantDetails.rentals[0].dailyRent.toFixed(2)}` : 'N/A'}
                 </p>
               </div>
             </div>

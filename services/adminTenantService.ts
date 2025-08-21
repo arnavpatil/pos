@@ -24,7 +24,7 @@ export interface Rental {
   startDate: string;
   endDate: string;
   status: string;
-  monthlyRent: number;
+  dailyRent: number;
   lastPayment: string | null;
   createdAt: string;
   updatedAt: string;
@@ -45,6 +45,7 @@ export interface AdminTenant {
 }
 
 class AdminTenantService {
+<<<<<<< HEAD
   private baseUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/api` 
     : 'http://localhost:3001/api';
@@ -52,6 +53,13 @@ class AdminTenantService {
   async getTenants(): Promise<AdminTenant[]> {
     try {
       console.log('Fetching tenants from local API proxy:', `${this.baseUrl}/admin/tenants-allocations`);
+=======
+  private baseUrl = '/api';
+
+  async getTenants(): Promise<AdminTenant[]> {
+    try {
+      console.log('Fetching tenants from local API:', `${this.baseUrl}/admin/tenants-allocations`);
+>>>>>>> 0a54b791789908e92eb7771d7df72b2a7a66e002
       
       const token = authService.getAuthToken();
       if (!token) {
