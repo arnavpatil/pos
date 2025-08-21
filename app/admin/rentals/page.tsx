@@ -11,7 +11,7 @@ interface Rental {
   tenantName: string;
   propertyAddress: string;
   rentAmount: number;
-  status: 'active' | 'overdue' | 'terminated';
+  status: 'active' | 'overdue' | '-';
   lastPaymentDate?: string;
   nextDueDate: string;
 }
@@ -51,7 +51,7 @@ const RentalsPage = () => {
             const lastPaymentDate = rental.lastPayment ? new Date(rental.lastPayment) : null;
             
             // Determine status based on rental data
-            let status: 'active' | 'overdue' | 'terminated' = 'terminated';
+            let status: 'active' | 'overdue' | '-' = '-';
             if (rental.status === 'ACTIVE') {
               if (now <= endDate) {
                 // Check if payment is overdue (assuming monthly payments)
@@ -121,7 +121,7 @@ const RentalsPage = () => {
         return 'bg-green-100 text-green-800';
       case 'overdue':
         return 'bg-red-100 text-red-800';
-      case 'terminated':
+      case '-':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';

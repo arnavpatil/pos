@@ -59,60 +59,7 @@ const AdminProducts = () => {
       // If no data from API, use mock data for testing
       if (!adminProductsData || adminProductsData.length === 0) {
         const mockAdminProducts: AdminProduct[] = [
-          {
-            id: 'admin-1',
-            tenantId: 'T001',
-            name: 'Handmade Ceramic Mug',
-            description: 'Beautiful handcrafted ceramic mug with unique glaze pattern',
-            price: 25.99,
-            stock: 15,
-            category: 'accessories',
-            sku: 'MUG-001',
-            status: 'PENDING',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            tenant: {
-              id: 'T001',
-              businessName: 'Artisan Crafts Co.'
-            },
-            logs: []
-          },
-          {
-            id: 'admin-2',
-            tenantId: 'T002',
-            name: 'Vintage Style Earrings',
-            description: 'Elegant vintage-inspired earrings with antique finish',
-            price: 18.50,
-            stock: 8,
-            category: 'earrings',
-            sku: 'EAR-002',
-            status: 'PENDING',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            tenant: {
-              id: 'T002',
-              businessName: 'Vintage Jewelry Studio'
-            },
-            logs: []
-          },
-          {
-            id: 'admin-3',
-            tenantId: 'T003',
-            name: 'Custom Logo Stickers',
-            description: 'High-quality vinyl stickers with custom logo design',
-            price: 5.99,
-            stock: 100,
-            category: 'stickers',
-            sku: 'STK-003',
-            status: 'APPROVED',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            tenant: {
-              id: 'T003',
-              businessName: 'Design Print Shop'
-            },
-            logs: []
-          }
+          
         ];
         setAdminProducts(mockAdminProducts);
         setFilteredAdminProducts(mockAdminProducts);

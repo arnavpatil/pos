@@ -92,60 +92,7 @@ class AdminProductService {
       
       // Return mock data for testing when API is not available
       const mockProducts: AdminProduct[] = [
-        {
-          id: 'prod-1',
-          tenantId: 'tenant-1',
-          name: 'Handcrafted Ceramic Vase',
-          description: 'Beautiful handmade ceramic vase with unique glaze pattern',
-          price: 89.99,
-          stock: 5,
-          category: 'Ceramics',
-          sku: 'CER-001',
-          status: 'PENDING',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-          tenant: {
-            id: 'tenant-1',
-            businessName: 'Art Corner Studio'
-          },
-          logs: []
-        },
-        {
-          id: 'prod-2',
-          tenantId: 'tenant-2',
-          name: 'Silver Pendant Necklace',
-          description: 'Elegant silver pendant with moonstone',
-          price: 125.00,
-          stock: 3,
-          category: 'Jewelry',
-          sku: 'JEW-002',
-          status: 'PENDING',
-          createdAt: '2024-01-16T14:20:00Z',
-          updatedAt: '2024-01-16T14:20:00Z',
-          tenant: {
-            id: 'tenant-2',
-            businessName: 'Luna\'s Jewelry'
-          },
-          logs: []
-        },
-        {
-          id: 'prod-3',
-          tenantId: 'tenant-1',
-          name: 'Abstract Canvas Painting',
-          description: 'Original abstract painting on canvas',
-          price: 299.99,
-          stock: 1,
-          category: 'Paintings',
-          sku: 'ART-003',
-          status: 'APPROVED',
-          createdAt: '2024-01-10T09:15:00Z',
-          updatedAt: '2024-01-12T16:45:00Z',
-          tenant: {
-            id: 'tenant-1',
-            businessName: 'Art Corner Studio'
-          },
-          logs: []
-        }
+        
       ];
       
       // Filter by tenantId if provided

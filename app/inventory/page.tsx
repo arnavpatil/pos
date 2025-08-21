@@ -577,7 +577,7 @@ export default function InventoryPage() {
                                       {tenant.rentals[0].cube.code}
                                     </div>
                                     <div className="text-xs text-gray-500">
-                                      {tenant.rentals[0].cube.size} • ${tenant.rentals[0].cube.pricePerMonth}/month
+                                      {tenant.rentals[0].cube.size} • ${tenant.rentals[0].cube.pricePerDay}/day
                                     </div>
                                     <div className="text-xs text-gray-400">
                                       Status: {tenant.rentals[0].cube.status}

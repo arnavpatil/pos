@@ -619,7 +619,7 @@ const TenantForm = ({ isOpen, onClose, onSubmit, editingTenant }: TenantFormProp
                             <div className="flex-1">
                               <h4 className="font-medium text-gray-900 text-sm">{cube.code}</h4>
                               <p className="text-xs text-gray-600">Size: {cube.size}</p>
-                              <p className="text-xs text-gray-600">Price: ${cube.pricePerMonth}/month</p>
+                              <p className="text-xs text-gray-600">Price: ${cube.pricePerDay}/day</p>
                               <p className="text-xs text-gray-500">Status: {cube.status}</p>
                             </div>
                           </div>

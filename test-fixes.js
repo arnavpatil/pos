@@ -145,7 +145,7 @@ async function testViewCubes() {
       const availableCubes = cubes.filter(cube => cube.status === 'AVAILABLE');
       console.log(`   Available cubes: ${availableCubes.length}`);
       if (availableCubes.length > 0) {
-        console.log(`   Sample available cube: ${availableCubes[0].code} (${availableCubes[0].size}) - $${availableCubes[0].pricePerMonth}/month`);
+        console.log(`   Sample available cube: ${availableCubes[0].code} (${availableCubes[0].size}) - $${availableCubes[0].pricePerDay}/month`);
       }
     }
     
@@ -181,7 +181,7 @@ async function testAssignCube() {
     cubeId: availableCube.id,
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-    dailyRent: availableCube.pricePerMonth
+    dailyRent: availableCube.pricePerDay
   };
 
   try {
