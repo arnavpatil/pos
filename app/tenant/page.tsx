@@ -209,19 +209,51 @@ const TenantDashboard = () => {
 
     setIsUpdatingStock(true);
     try {
-      const updatedProduct = await tenantPortalService.updateProductStock(
-        updateStockForm.productId, 
-        updateStockForm.stock, 
-        updateStockForm.price
+      // Find the product to get its variants
+      const product = tenantProducts.find(p => p.id === updateStockForm.productId);
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      // Check if product has variants
+      if (!product.variants || product.variants.length === 0) {
+        throw new Error('Product has no variants. Please contact support.');
+      }
+
+      // Use the first variant (default variant)
+      const defaultVariant = product.variants[0];
+      if (!defaultVariant.id) {
+        throw new Error('Invalid variant data');
+      }
+
+      // Update using the variant endpoint
+      const updatedVariant = await tenantPortalService.updateVariant(
+        updateStockForm.productId,
+        defaultVariant.id,
+        updateStockForm.price,
+        updateStockForm.stock
       );
       
       // Update the product in the local state
       setTenantProducts(prev => 
-        prev.map(product => 
-          product.id === updateStockForm.productId 
-            ? { ...product, stock: updatedProduct.stock, price: updatedProduct.price }
-            : product
-        )
+        prev.map(p => {
+          if (p.id === updateStockForm.productId) {
+            // Update the product's main price/stock and the variant
+            const updatedVariants = p.variants?.map(v => 
+              v.id === defaultVariant.id 
+                ? { ...v, price: updatedVariant.price, stock: updatedVariant.stock }
+                : v
+            ) || [];
+            
+            return {
+              ...p,
+              price: updatedVariant.price,
+              stock: updatedVariant.stock,
+              variants: updatedVariants
+            };
+          }
+          return p;
+        })
       );
       
       setShowUpdateStock(false);
@@ -239,7 +271,7 @@ const TenantDashboard = () => {
       // Show error snackbar
       setSnackbar({
         isVisible: true,
-        message: 'Failed to update product. Please try again.',
+        message: error instanceof Error ? error.message : 'Failed to update product. Please try again.',
         type: 'error'
       });
     } finally {
